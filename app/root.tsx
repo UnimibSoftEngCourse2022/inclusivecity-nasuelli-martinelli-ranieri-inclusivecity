@@ -10,6 +10,7 @@ import {
 import type {Route} from "./+types/root";
 import "./app.css";
 import React from "react";
+import {useTheme} from "~/hooks/useTheme";
 
 export const links: Route.LinksFunction = () => [
     {rel: "preconnect", href: "https://fonts.googleapis.com"},
@@ -36,16 +37,31 @@ export const meta: MetaFunction = () => {
     ];
 };
 
+const THEME_INITIALIZER_SCRIPT = `
+  (function() {
+    const saved = localStorage.getItem('theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (saved === 'dark' || (!saved && systemDark)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  })();
+`;
+
 export function Layout({children}: { children: React.ReactNode }) {
+    useTheme();
+
     return (
-        <html lang="en">
+        <html lang="it">
         <head>
             <meta charSet="utf-8"/>
             <meta name="viewport" content="width=device-width, initial-scale=1"/>
             <Meta/>
             <Links/>
+            <script dangerouslySetInnerHTML={{__html: THEME_INITIALIZER_SCRIPT}}/>
         </head>
-        <body>
+        <body className="bg-background text-text transition-colors duration-300">
         {children}
         <ScrollRestoration/>
         <Scripts/>
