@@ -1,3 +1,3 @@
 export default function Index() {
-    return <p>Ciao</p>;
+    return <p>Home Screen</p>;
 }
