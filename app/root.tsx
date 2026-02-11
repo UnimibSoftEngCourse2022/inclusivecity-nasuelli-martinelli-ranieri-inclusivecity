@@ -1,7 +1,7 @@
 import {
     isRouteErrorResponse,
     Links,
-    Meta,
+    Meta, type MetaFunction,
     Outlet,
     Scripts,
     ScrollRestoration,
@@ -22,7 +22,19 @@ export const links: Route.LinksFunction = () => [
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
     },
+    {rel: "apple-touch-icon", href: "/icons/apple-icon-180.png"},
 ];
+
+export const meta: MetaFunction = () => {
+    return [
+        {title: "InclusiveCity"},
+        {name: "description", content: "Mappe accessibili per tutti"},
+
+        {name: "apple-mobile-web-app-capable", content: "yes"},
+        {name: "apple-mobile-web-app-status-bar-style", content: "default"},
+        {name: "apple-mobile-web-app-title", content: "InclusiveCity"},
+    ];
+};
 
 export function Layout({children}: { children: React.ReactNode }) {
     return (
