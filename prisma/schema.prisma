@@ -52,7 +52,7 @@ model DeviceToken {
   createdAt  DateTime @default(now())
 
   // Chiavi esterne
-  userId String
+  userId String @db.Uuid
 
   // Relazioni
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -78,7 +78,7 @@ model Barrier {
   updatedAt DateTime @updatedAt
 
   // Chiavi esterne
-  userId String
+  userId String @db.Uuid
   typeId String
 
   // Relazioni
@@ -112,7 +112,7 @@ model Feedback {
   createdAt DateTime @default(now())
 
   // Chiavi esterne
-  userId    String
+  userId    String @db.Uuid
   barrierId String
 
   // Relazioni
@@ -129,7 +129,7 @@ model Report {
   createdAt DateTime     @default(now())
 
   // Chiavi esterne
-  userId    String
+  userId    String @db.Uuid
   barrierId String
 
   // Relazioni
@@ -146,8 +146,8 @@ model Resolution {
   approvedAt  DateTime?
 
   // Chiavi esterne
-  userId     String
-  approverId String?
+  userId     String  @db.Uuid
+  approverId String? @db.Uuid
   barrierId  String
 
   // Relazioni
@@ -165,7 +165,7 @@ model Notification {
   createdAt DateTime         @default(now())
 
   // Chiavi esterne
-  userId    String
+  userId    String  @db.Uuid
   barrierId String?
 
   // Relazioni
