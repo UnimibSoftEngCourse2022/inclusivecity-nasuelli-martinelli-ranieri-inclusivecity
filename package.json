@@ -2,6 +2,9 @@
   "name": "inclusive-city",
   "private": true,
   "type": "module",
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
@@ -10,6 +13,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@prisma/client": "^5.22.0",
     "@react-router/node": "7.12.0",
     "@react-router/serve": "7.12.0",
     "clsx": "^2.1.1",
@@ -31,6 +35,7 @@
     "@types/node": "^22",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "prisma": "^5.22.0",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
