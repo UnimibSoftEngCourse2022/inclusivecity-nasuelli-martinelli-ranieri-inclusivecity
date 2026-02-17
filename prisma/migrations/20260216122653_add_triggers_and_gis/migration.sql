@@ -250,7 +250,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
--- TRIGGER on insert new user
+-- TRIGGER on insert new feedback
 DROP TRIGGER IF EXISTS feedback_insert ON "Feedback";
 CREATE TRIGGER feedback_insert
     AFTER INSERT
