@@ -1,8 +1,5 @@
-import {initializeApp, getApps, getApp} from "firebase/app";
+import {getApp, getApps, initializeApp} from "firebase/app";
 import {type Analytics, getAnalytics, isSupported} from "firebase/analytics";
-import {getAuth} from "firebase/auth";
-import {getFirestore} from "firebase/firestore";
-import {getStorage} from "firebase/storage";
 import {envSchema} from "~/utils/envSchema";
 
 const env = envSchema.parse(import.meta.env);
@@ -19,10 +16,6 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-const auth = getAuth(app);
-const firestore = getFirestore(app);
-const storage = getStorage(app);
-
 let analytics: Analytics | null = null;
 if (typeof window !== "undefined") {
     isSupported().then((supported) => {
@@ -32,4 +25,4 @@ if (typeof window !== "undefined") {
     });
 }
 
-export {app, auth, firestore, storage, analytics};
+export {app, analytics};

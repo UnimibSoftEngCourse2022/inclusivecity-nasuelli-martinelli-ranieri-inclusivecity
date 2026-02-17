@@ -1,3 +1,9 @@
+import {redirect} from "react-router";
+
+export function loader() {
+    return redirect("/app/map");
+}
+
 export default function Index() {
-    return <h1>Hello, World!</h1>;
+    return null;
 }

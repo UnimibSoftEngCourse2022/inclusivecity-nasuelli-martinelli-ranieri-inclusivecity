@@ -1,16 +1,10 @@
-import {
-    isRouteErrorResponse,
-    Links,
-    Meta, type MetaFunction,
-    Outlet,
-    Scripts,
-    ScrollRestoration,
-} from "react-router";
+import {isRouteErrorResponse, Links, Meta, type MetaFunction, Outlet, Scripts, ScrollRestoration} from "react-router";
 
 import type {Route} from "./+types/root";
 import "./app.css";
 import React from "react";
 import {useTheme} from "~/hooks/useTheme";
+import {AuthProvider} from "~/context/AuthContext";
 
 export const links: Route.LinksFunction = () => [
     {rel: "preconnect", href: "https://fonts.googleapis.com"},
@@ -62,7 +56,9 @@ export function Layout({children}: { children: React.ReactNode }) {
             <script dangerouslySetInnerHTML={{__html: THEME_INITIALIZER_SCRIPT}}/>
         </head>
         <body className="bg-background text-text transition-colors duration-300">
-        {children}
+        <AuthProvider>
+            {children}
+        </AuthProvider>
         <ScrollRestoration/>
         <Scripts/>
         </body>
