@@ -1,9 +1,18 @@
-import {redirect} from "react-router";
+import {Navigate} from "react-router";
+import {useAuth} from "~/context/AuthContext";
+import Loading from "~/components/Loading";
 
-export function loader() {
-    return redirect("/app/map");
-}
 
 export default function Index() {
-    return null;
+    const {user, loading} = useAuth();
+
+    if (loading) {
+        return <Loading/>;
+    }
+
+    if (user) {
+        return <Navigate to="/app/map" replace/>;
+    }
+
+    return <Navigate to="/auth/login" replace/>;
 }

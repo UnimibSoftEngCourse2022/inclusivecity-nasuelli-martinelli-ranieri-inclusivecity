@@ -1,4 +1,4 @@
-import {Navigate, Outlet, useLocation} from "react-router";
+import {Navigate, Outlet} from "react-router";
 import {useAuth} from "~/context/AuthContext";
 import Loading from "~/components/Loading";
 
@@ -14,8 +14,9 @@ export default function AuthLayout() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4 transition-colors duration-500">
-            <div className="w-full max-w-md space-y-8">
+        <div
+            className="h-full w-full overflow-y-auto bg-background flex flex-col items-center justify-center p-4 transition-colors duration-500">
+            <div className="w-full max-w-md space-y-8 my-auto">
                 <Outlet/>
             </div>
         </div>

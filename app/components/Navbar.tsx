@@ -1,7 +1,7 @@
 import {NavLink} from "react-router";
 import {List, Map, User} from "lucide-react";
 
-export function Navbar() {
+export default function Navbar() {
     const navItems = [
         {
             label: "Mappa",

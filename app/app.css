@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+@layer base {
+    html, body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    #root {
+        height: 100%;
+        width: 100%;
+    }
+}
+
 @theme {
     --color-primary: var(--primary);
     --color-primary-foreground: var(--primary-fg);
@@ -45,6 +59,7 @@
 
 html, body {
     @apply transition-colors duration-500 ease-in-out;
+    overscroll-behavior: none;
 }
 
 
