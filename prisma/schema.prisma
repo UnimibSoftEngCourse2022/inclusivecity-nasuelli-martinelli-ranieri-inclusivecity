@@ -15,6 +15,7 @@ model Disability {
   name          String
   description   String
   mobilityLevel Int // Livello di mobilità (es. 100 = piena, 0 = nulla)
+  iconName      String
 
   // Relazioni
   users User[]
