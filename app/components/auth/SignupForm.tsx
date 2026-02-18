@@ -6,6 +6,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {useNavigate} from "react-router";
 import {supabase} from "~/services/supabase/supabase";
+import SocialLogin from "~/components/auth/SocialLogin";
 
 const signUpSchema = z
     .object({
@@ -130,6 +131,9 @@ export default function SignUpForm() {
                     {loading ? "Registrazione in corso..." : "Registrati"}
                 </button>
             </form>
+
+            {/* Google Login */}
+            <SocialLogin />
         </div>
     );
 }

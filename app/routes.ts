@@ -5,6 +5,8 @@ export default [
     // ROOT
     index("routes/_index.tsx"),
 
+    route("auth/callback", "routes/auth/callback.tsx"),
+
     // PARTE PUBBLICA - AUTH (solo se non autenticato, altrimenti reindirizza alla PARTE PRIVATA)
     layout("routes/auth/layout.tsx", [
         route("auth/login", "routes/auth/login.tsx"),

@@ -6,6 +6,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {useLocation, useNavigate} from "react-router";
 import {supabase} from "~/services/supabase/supabase";
+import SocialLogin from "~/components/auth/SocialLogin";
 
 const loginSchema = z.object({
     email: z.email("Inserisci un'email valida"),
@@ -104,6 +105,9 @@ export default function LoginForm() {
                     {loading ? "Accesso in corso..." : "Accedi"}
                 </button>
             </form>
+
+            {/* Google Login */}
+            <SocialLogin />
         </div>
     );
 }
