@@ -6,7 +6,7 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "scripts": {
-    "build": "react-router build",
+    "build": "npx prisma generate && react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc"
