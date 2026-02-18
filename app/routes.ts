@@ -22,7 +22,7 @@ export default [
         // APP
         route("app", "routes/app/layout.tsx", [
             route("map", "routes/app/map.tsx"),
-            route("account", "routes/app/account.tsx"),
+            route("profile", "routes/app/profile.tsx"),
             route("admin/reports", "routes/app/reports.tsx"),
 
             route("barriers", "routes/app/barriers/list.tsx"),
