@@ -46,3 +46,20 @@
 html, body {
     @apply transition-colors duration-500 ease-in-out;
 }
+
+
+@layer utilities {
+    .app-layout {
+        @apply h-dvh flex flex-col bg-background overflow-hidden;
+    }
+
+    .app-content {
+        @apply flex-1 overflow-y-auto overflow-x-hidden relative;
+    }
+
+    .app-navbar {
+        @apply shrink-0 h-16 bg-surface border-t border-border z-50;
+
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}

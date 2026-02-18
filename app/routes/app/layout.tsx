@@ -1,6 +1,7 @@
 import {Navigate, Outlet} from "react-router";
 import {useAuth} from "~/context/AuthContext";
 import Loading from "~/components/Loading";
+import {Navbar} from "~/components/Navbar";
 
 export default function AppLayout() {
     const {profile, loading} = useAuth();
@@ -18,6 +19,7 @@ export default function AppLayout() {
             </main>
 
             <nav className="app-navbar">
+                <Navbar/>
             </nav>
         </div>
     );
