@@ -136,6 +136,8 @@ model Report {
   // Relazioni
   user    User    @relation(fields: [userId], references: [id])
   barrier Barrier @relation(fields: [barrierId], references: [id])
+
+  @@unique([userId, barrierId])
 }
 
 model Resolution {
@@ -155,6 +157,8 @@ model Resolution {
   user     User    @relation(fields: [userId], references: [id])
   approver User?   @relation("ResolutionApprover", fields: [approverId], references: [id])
   barrier  Barrier @relation(fields: [barrierId], references: [id])
+
+  @@unique([userId, barrierId])
 }
 
 model Notification {
