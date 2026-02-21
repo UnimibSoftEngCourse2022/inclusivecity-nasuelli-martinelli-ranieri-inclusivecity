@@ -19,6 +19,12 @@ firestore-debug.log
 ui-debug.log
 firebase.json.backup
 
+# --- SonarQube ---
+.scannerwork/
+
+# --- Vercel ---
+.vercel/
+
 # --- Testing ---
 coverage/
 
@@ -41,7 +47,3 @@ lerna-debug.log*
 .DS_Store
 Thumbs.db
 Desktop.ini
-
-# --- SonarQube ---
-.scannerwork/
-.vercel
