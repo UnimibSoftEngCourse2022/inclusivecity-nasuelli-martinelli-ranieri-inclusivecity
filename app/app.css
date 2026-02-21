@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@layer base {
+    html, body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    #root {
+        height: 100%;
+        width: 100%;
+    }
+}
+
+@theme {
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-fg);
+    --color-background: var(--background);
+    --color-surface: var(--surface);
+    --color-text: var(--text);
+    --color-text-muted: var(--text-muted);
+    --color-border: var(--border);
+
+    /* Colori Semantici */
+    --color-error: var(--error);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+}
+
+:root {
+    --primary: #22c55e;
+    --primary-fg: #ffffff;
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+
+    --error: #ef4444;
+    --success: #10b981;
+    --warning: #f59e0b;
+}
+
+.dark {
+    --primary: #4ade80;
+    --primary-fg: #052e16;
+    --background: #020617;
+    --surface: #0f172a;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #1e293b;
+
+    --error: #f87171;
+    --success: #34d399;
+    --warning: #fbbf24;
+}
+
+html, body {
+    @apply transition-colors duration-500 ease-in-out;
+    overscroll-behavior: none;
+}
+
+
+@layer utilities {
+    .app-layout {
+        @apply h-dvh flex flex-col bg-background overflow-hidden;
+    }
+
+    .app-content {
+        @apply flex-1 overflow-y-auto overflow-x-hidden relative;
+    }
+
+    .app-navbar {
+        @apply shrink-0 h-16 bg-surface border-t border-border z-50;
+
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}

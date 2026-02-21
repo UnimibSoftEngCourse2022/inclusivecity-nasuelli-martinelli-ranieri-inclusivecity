@@ -1,0 +1,222 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"] // Abilita gestione estensioni
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL") // Porta 6543 (Pooler)
+  directUrl  = env("DIRECT_URL") // Porta 5432 (Direct)
+  extensions = [postgis] // Attiva PostGIS su Supabase
+}
+
+model Disability {
+  id            String @id @default(uuid())
+  name          String
+  description   String
+  mobilityLevel Int // Livello di mobilità (es. 100 = piena, 0 = nulla)
+  iconName      String
+
+  // Relazioni
+  users User[]
+}
+
+model User {
+  id              String   @id @db.Uuid // UID di Supabase Auth
+  email           String   @unique
+  firstName       String
+  lastName        String?
+  role            Role     @default(USER)
+  profilePicUrl   String?
+  reputationScore Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  // Chiavi esterne
+  disabilityId String?
+
+  // Relazioni
+  disability          Disability?    @relation(fields: [disabilityId], references: [id])
+  barriers            Barrier[]
+  feedbacks           Feedback[]
+  reports             Report[]
+  resolutions         Resolution[]
+  approvedResolutions Resolution[]   @relation("ResolutionApprover")
+  tokens              DeviceToken[]
+  notifications       Notification[]
+}
+
+model DeviceToken {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  deviceType String?
+  lastUsedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  // Chiavi esterne
+  userId String @db.Uuid
+
+  // Relazioni
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Barrier {
+  id          String                               @id @default(uuid())
+  title       String
+  description String
+  address     String?
+  photoUrls   String[]
+  difficulty  Int
+  location    Unsupported("geometry(Point, 4326)")
+  state       BarrierState                         @default(ACTIVE)
+
+  // Campi Denormalizzati (Cache per performance mappa, gestiti dai trigger)
+  averageRating Float @default(0)
+  totalRatings  Int   @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Chiavi esterne
+  userId String @db.Uuid
+  typeId String
+
+  // Relazioni
+  creator       User           @relation(fields: [userId], references: [id])
+  type          BarrierType    @relation(fields: [typeId], references: [id])
+  feedbacks     Feedback[]
+  reports       Report[]
+  resolutions   Resolution[]
+  notifications Notification[]
+
+  // Indice spaziale GIST
+  @@index([location], name: "location_idx", type: Gist)
+  @@index([state])
+}
+
+model BarrierType {
+  id                String  @id @default(uuid())
+  label             String
+  defaultDifficulty Int // Livello minimo richiesto per superarla
+  iconKey           String? // Frontend
+  colorHex          String? // Frontend
+
+  // Relazioni
+  barriers Barrier[]
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  rating    Int // Da 1 a 5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  // Chiavi esterne
+  userId    String @db.Uuid
+  barrierId String
+
+  // Relazioni
+  user    User    @relation(fields: [userId], references: [id])
+  barrier Barrier @relation(fields: [barrierId], references: [id])
+
+  @@unique([userId, barrierId])
+}
+
+model Report {
+  id        String       @id @default(uuid())
+  reason    ReportReason
+  status    ReportStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  // Chiavi esterne
+  userId    String @db.Uuid
+  barrierId String
+
+  // Relazioni
+  user    User    @relation(fields: [userId], references: [id])
+  barrier Barrier @relation(fields: [barrierId], references: [id])
+
+  @@unique([userId, barrierId])
+}
+
+model Resolution {
+  id          String           @id @default(uuid())
+  status      ResolutionStatus @default(PENDING)
+  evidenceUrl String?
+  comment     String?
+  createdAt   DateTime         @default(now())
+  approvedAt  DateTime?
+
+  // Chiavi esterne
+  userId     String  @db.Uuid
+  approverId String? @db.Uuid
+  barrierId  String
+
+  // Relazioni
+  user     User    @relation(fields: [userId], references: [id])
+  approver User?   @relation("ResolutionApprover", fields: [approverId], references: [id])
+  barrier  Barrier @relation(fields: [barrierId], references: [id])
+
+  @@unique([userId, barrierId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  title     String
+  body      String
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Chiavi esterne
+  userId    String  @db.Uuid
+  barrierId String?
+
+  // Relazioni
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  barrier Barrier? @relation(fields: [barrierId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum BarrierState {
+  ACTIVE
+  RESOLVED
+  IN_REVIEW
+  HIDDEN
+}
+
+enum ReportReason {
+  DOES_NOT_EXIST
+  DUPLICATE
+  INAPPROPRIATE
+  WRONG_LOCATION
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+}
+
+enum ResolutionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  BARRIER_APPROVED
+  BARRIER_REJECTED
+  BARRIER_RESOLVED
+  NEW_FEEDBACK
+  SYSTEM_ALERT
+}

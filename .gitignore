@@ -1,0 +1,49 @@
+# --- Dependencies ---
+node_modules/
+.pnp
+.pnp.js
+
+# --- Build Outputs (Vite & React Router) ---
+dist/
+build/
+.react-router/
+*.tsbuildinfo
+
+# --- Environment Variables ---
+.env
+
+# --- Firebase ---
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+firebase.json.backup
+
+# --- SonarQube ---
+.scannerwork/
+
+# --- Vercel ---
+.vercel/
+
+# --- Testing ---
+coverage/
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- IDE & Editor Config ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+
+# --- OS Specific Files ---
+.DS_Store
+Thumbs.db
+Desktop.ini
