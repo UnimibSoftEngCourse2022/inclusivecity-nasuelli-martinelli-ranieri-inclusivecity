@@ -1,8 +1,11 @@
 import { useAuth } from "~/context/AuthContext";
 import { LogOut, Shield, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function ProfilePage() {
+    const navigate = useNavigate();
+
     const { profile, signOut } = useAuth();
 
     const isAdmin = profile?.role === "ADMIN";
@@ -51,28 +54,26 @@ export default function ProfilePage() {
                     </Link>
                 </section>
             )}
+{/* --- LE MIE BARRIERE --- */}
+          <section className="bg-surface rounded-xl border border-border p-4 shadow-sm space-y-3 mt-6">
+  <h2 className="text-lg font-semibold text-text">Barriere</h2>
+  <div className="flex flex-col space-y-3">
+  <button
+    onClick={() => navigate("/app/mybarriers")}
+    className="text-primary font-medium hover:underline text-left"
+  >
+    Mostra barriere segnalate da me
+  </button>
 
-            {/* --- LE MIE BARRIERE --- */}
-            <section className="bg-surface rounded-xl border border-border p-4 shadow-sm space-y-3">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <MapPin className="w-5 h-5" />
-                    Le mie barriere
-                </h2>
-
-                <Link
-                    to="/barriers?mine=true"
-                    className="text-primary font-medium hover:underline"
-                >
-                    Mostra solo quelle segnalate da me
-                </Link>
-
-                <Link
-                    to="/barriers"
-                    className="text-primary font-medium hover:underline"
-                >
-                    Mostra tutte le barriere
-                </Link>
-            </section>
+  <button
+    onClick={() => navigate("/app/allbarriers")}
+    className="text-primary font-medium hover:underline text-left"
+  >
+    Mostra tutte le barriere
+  </button>
+  </div>
+</section>
+ 
 
             {/* --- LOGOUT --- */}
             <section className="bg-surface rounded-xl border border-border overflow-hidden shadow-sm">

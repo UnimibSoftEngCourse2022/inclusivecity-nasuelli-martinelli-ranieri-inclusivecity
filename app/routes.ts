@@ -28,6 +28,9 @@ export default [
             route("profilesettings", "routes/app/profilesettings.tsx"),
             route("admin/reports", "routes/app/reports.tsx"),
 
+            route("mybarriers", "routes/app/mybarriers.tsx"),
+            route("allbarriers", "routes/app/allbarriers.tsx"),
+
             route("barriers", "routes/app/barriers/list.tsx"),
             route("barriers/new", "routes/app/barriers/new.tsx"),
             route("barriers/:id", "routes/app/barriers/detail.tsx"),
