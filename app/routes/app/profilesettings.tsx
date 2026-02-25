@@ -9,7 +9,6 @@ export default function SettingsPage() {
 
   if (!user) return <div>Caricamento...</div>;
 
-
   const safeUser = user!;
 
   const [firstName, setFirstName] = useState(profile?.firstName || "");
@@ -43,6 +42,7 @@ export default function SettingsPage() {
         .getPublicUrl(filePath);
 
       setProfilePicUrl(data.publicUrl);
+
     } catch (error) {
       alert("Errore durante l'upload dell'immagine");
     } finally {
@@ -91,23 +91,37 @@ export default function SettingsPage() {
   }
 
   async function handleRoleChangeToAdmin() {
-    setChangingRole(true);
+  const ADMIN_KEY = "adminkey123";
 
-    const { error } = await supabase
-      .from("User")
-      .update({ role: "ADMIN" })
-      .eq("id", safeUser.id);
+  const key = prompt("Inserisci la chiave per diventare Admin:");
 
-    setChangingRole(false);
-
-    if (!error) {
-      await refreshProfile();
-      alert("Ora sei Admin");
-      navigate("/app/profile");
-    } else {
-      alert("Errore durante il cambio ruolo");
-    }
+  if (!key) {
+    alert("Operazione annullata");
+    return;
   }
+
+  if (key !== ADMIN_KEY) {
+    alert("Chiave non valida");
+    return;
+  }
+
+  setChangingRole(true);
+
+  const { error } = await supabase
+    .from("User")
+    .update({ role: "ADMIN" })
+    .eq("id", safeUser.id);
+
+  setChangingRole(false);
+
+  if (!error) {
+    await refreshProfile();
+    alert("Ora sei Admin");
+    navigate("/app/profile");
+  } else {
+    alert("Errore durante il cambio ruolo");
+  }
+}
 
   async function handleRoleChangeToUser() {
     setChangingRole(true);
