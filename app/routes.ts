@@ -25,6 +25,7 @@ export default [
 
             route("map", "routes/app/map.tsx"),
             route("profile", "routes/app/profile.tsx"),
+            route("profilesettings", "routes/app/profilesettings.tsx"),
             route("admin/reports", "routes/app/reports.tsx"),
 
             route("barriers", "routes/app/barriers/list.tsx"),

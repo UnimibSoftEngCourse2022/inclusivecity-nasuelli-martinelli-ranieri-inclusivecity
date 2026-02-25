@@ -28,12 +28,15 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
+                {/* --- COLLEGAMENTO ALLA PAGINA DI MODIFICA --- */}
                 <Link
-                    to="/profile/edit"
-                    className="inline-block mt-2 text-primary font-medium hover:underline"
+                   to="/app/profilesettings"
+                className="inline-block mt-2 text-primary font-medium hover:underline"
                 >
-                    Modifica profilo
+                  Modifica profilo
+                
                 </Link>
+
             </section>
 
             {/* --- ADMIN --- */}
