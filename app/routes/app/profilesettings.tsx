@@ -9,7 +9,7 @@ export default function SettingsPage() {
 
   if (!user) return <div>Caricamento...</div>;
 
-  // TypeScript: user non è più null
+
   const safeUser = user!;
 
   const [firstName, setFirstName] = useState(profile?.firstName || "");
