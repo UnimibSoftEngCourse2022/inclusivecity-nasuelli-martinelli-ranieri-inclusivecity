@@ -43,9 +43,9 @@ CREATE OR REPLACE FUNCTION notify_resolution_status() RETURNS TRIGGER AS $$
 DECLARE
 v_barrier_title TEXT;
 BEGIN
-    -- Agisci solo se lo stato è effettivamente cambiato
-    IF NEW.status = OLD.status THEN
-        RETURN NEW;
+-- Agisci solo se lo stato è effettivamente cambiato
+IF NEW.status = OLD.status THEN
+    RETURN NEW;
 END IF;
 
 SELECT title INTO v_barrier_title FROM "Barrier" WHERE id = NEW."barrierId";
@@ -72,18 +72,18 @@ CREATE OR REPLACE FUNCTION notify_report_status() RETURNS TRIGGER AS $$
 DECLARE
 v_barrier_title TEXT;
 BEGIN
-    IF NEW.status = OLD.status THEN
-        RETURN NEW;
+IF NEW.status = OLD.status THEN
+    RETURN NEW;
 END IF;
 
 SELECT title INTO v_barrier_title FROM "Barrier" WHERE id = NEW."barrierId";
 
 IF NEW.status = 'REVIEWED' THEN
     INSERT INTO "Notification" (id, title, body, type, "userId", "barrierId", "createdAt")
-    VALUES (gen_random_uuid()::text, 'Segnalazione Accettata', 'Il tuo report per "' || v_barrier_title || '" è stato verificato. Grazie per il contributo!', 'REPORT_ACCEPTED', NEW."userId", NEW."barrierId", NOW());
+    VALUES (gen_random_uuid()::text, 'Segnalazione Accettata', 'Il tuo report per "' || v_barrier_title || '" è stato verificato. Grazie per il contributo!', 'REPORT_REVIEWED', NEW."userId", NEW."barrierId", NOW());
 ELSIF NEW.status = 'DISMISSED' THEN
     INSERT INTO "Notification" (id, title, body, type, "userId", "barrierId", "createdAt")
-    VALUES (gen_random_uuid()::text, 'Segnalazione Rifiutata', 'Il tuo report per "' || v_barrier_title || '" è stato scartato dopo la revisione.', 'REPORT_REJECTED', NEW."userId", NEW."barrierId", NOW());
+    VALUES (gen_random_uuid()::text, 'Segnalazione Rifiutata', 'Il tuo report per "' || v_barrier_title || '" è stato scartato dopo la revisione.', 'REPORT_DISMISSED', NEW."userId", NEW."barrierId", NOW());
 END IF;
 
 RETURN NEW;
@@ -98,8 +98,8 @@ CREATE TRIGGER trigger_notify_report_status AFTER UPDATE OF status ON "Report" F
 -- Notifica il creatore originale della barriera quando il suo stato cambia globalmente
 CREATE OR REPLACE FUNCTION notify_barrier_state() RETURNS TRIGGER AS $$
 BEGIN
-    IF NEW.state = OLD.state THEN
-        RETURN NEW;
+IF NEW.state = OLD.state THEN
+    RETURN NEW;
 END IF;
 
 IF NEW.state = 'RESOLVED' THEN
