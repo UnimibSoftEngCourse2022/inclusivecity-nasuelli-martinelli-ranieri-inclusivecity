@@ -25,6 +25,7 @@ export function usePushNotifications() {
             if (token) {
                 const deviceType = navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop";
                 const {error: dbError} = await supabase.from("DeviceToken").upsert({
+                    id: crypto.randomUUID(),
                     token: token,
                     userId: user.id,
                     deviceType: deviceType,
