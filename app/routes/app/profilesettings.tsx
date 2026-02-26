@@ -21,34 +21,48 @@ export default function SettingsPage() {
   const [changingPassword, setChangingPassword] = useState(false);
   const [changingRole, setChangingRole] = useState(false);
 
+  {/* AGGIORNAMENTO FOTO PROFILO */}
   async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
-    try {
-      setUploading(true);
-      const file = e.target.files?.[0];
-      if (!file) return;
+  try {
+    setUploading(true);
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${safeUser.id}.${fileExt}`;
-      const filePath = `profile-pictures/${fileName}`;
+    const fileExt = file.name.split(".").pop();
+    const fileName = `avatar-${safeUser.id}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("profile-pictures")
-        .upload(filePath, file, { upsert: true });
+    const { error: uploadError } = await supabase.storage
+      .from("profile-pictures")
+      .upload(fileName, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+    if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage
-        .from("profile-pictures")
-        .getPublicUrl(filePath);
+    const { data } = supabase.storage
+      .from("profile-pictures")
+      .getPublicUrl(fileName);
 
-      setProfilePicUrl(data.publicUrl);
+    const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
 
-    } catch (error) {
-      alert("Errore durante l'upload dell'immagine");
-    } finally {
-      setUploading(false);
-    }
+
+    setProfilePicUrl(publicUrl);
+
+    const { error: updateError } = await supabase
+      .from("User")
+      .update({ profilePicUrl: publicUrl })
+      .eq("id", safeUser.id);
+
+    if (updateError) throw updateError;
+
+    await refreshProfile();
+
+  } catch (error) {
+    alert("Errore durante l'upload dell'immagine.");
+  } finally {
+    setUploading(false);
   }
+}
+
+
 
   async function handleSave() {
     setSaving(true);
@@ -91,37 +105,37 @@ export default function SettingsPage() {
   }
 
   async function handleRoleChangeToAdmin() {
-  const ADMIN_KEY = "adminkey123";
+    const ADMIN_KEY = "adminkey123";
 
-  const key = prompt("Inserisci la chiave per diventare Admin:");
+    const key = prompt("Inserisci la chiave per diventare Admin:");
 
-  if (!key) {
-    alert("Operazione annullata");
-    return;
+    if (!key) {
+      alert("Operazione annullata");
+      return;
+    }
+
+    if (key !== ADMIN_KEY) {
+      alert("Chiave non valida");
+      return;
+    }
+
+    setChangingRole(true);
+
+    const { error } = await supabase
+      .from("User")
+      .update({ role: "ADMIN" })
+      .eq("id", safeUser.id);
+
+    setChangingRole(false);
+
+    if (!error) {
+      await refreshProfile();
+      alert("Ora sei Admin");
+      navigate("/app/profile");
+    } else {
+      alert("Errore durante il cambio ruolo");
+    }
   }
-
-  if (key !== ADMIN_KEY) {
-    alert("Chiave non valida");
-    return;
-  }
-
-  setChangingRole(true);
-
-  const { error } = await supabase
-    .from("User")
-    .update({ role: "ADMIN" })
-    .eq("id", safeUser.id);
-
-  setChangingRole(false);
-
-  if (!error) {
-    await refreshProfile();
-    alert("Ora sei Admin");
-    navigate("/app/profile");
-  } else {
-    alert("Errore durante il cambio ruolo");
-  }
-}
 
   async function handleRoleChangeToUser() {
     setChangingRole(true);
