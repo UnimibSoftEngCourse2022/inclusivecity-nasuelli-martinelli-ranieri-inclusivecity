@@ -1,14 +1,14 @@
-import {PrismaClient} from '@prisma/client';
+import {type BarrierType, PrismaClient} from '@prisma/client';
 import crypto from 'node:crypto';
 
 const prisma = new PrismaClient();
 
-// Funzione helper per ottenere un numero casuale in un range
+// Helper per coordinate casuali
 function getRandomInRange(min: number, max: number) {
     return Math.random() * (max - min) + min;
 }
 
-// Helper per inserire rapidamente barriere usando raw SQL
+// Helper per query SQL raw spaziale
 async function insertBarrierRaw( // NOSONAR
     id: string, title: string, description: string, address: string,
     difficulty: number, lat: number, lng: number, state: string,
@@ -25,14 +25,30 @@ async function insertBarrierRaw( // NOSONAR
 }
 
 async function main() {
-    console.log('🌱 Inizio del Seeding completo del Database...');
+    console.log('🌱 Inizio del Seeding Non-Distruttivo del Database...');
 
-    // 1. PULIZIA PROFONDA DEL DATABASE
-    console.log('🧹 Pulizia delle tabelle in corso...');
-    await prisma.$executeRaw`TRUNCATE TABLE "Notification", "Resolution", "Report", "Feedback", "Barrier", "DeviceToken", "User", "BarrierType", "Disability" CASCADE;`;
+    // 1. PULIZIA CHIRURGICA DEI VECCHI DATI DI SEED
+    console.log('🧹 Eliminazione dei vecchi dati di seed...');
+    const seedUsers = await prisma.user.findMany({
+        where: {email: {startsWith: 'seed_'}},
+        select: {id: true}
+    });
 
-    // 2. CREAZIONE DISABILITÀ
-    console.log('♿ Creazione tipologie di disabilità...');
+    const seedUserIds = seedUsers.map(u => u.id);
+
+    if (seedUserIds.length > 0) {
+        await prisma.resolution.deleteMany({where: {userId: {in: seedUserIds}}});
+        await prisma.report.deleteMany({where: {userId: {in: seedUserIds}}});
+        await prisma.feedback.deleteMany({where: {userId: {in: seedUserIds}}});
+        await prisma.barrier.deleteMany({where: {userId: {in: seedUserIds}}});
+        await prisma.user.deleteMany({where: {id: {in: seedUserIds}}});
+        console.log(`✅ Eliminati ${seedUserIds.length} utenti di seed e relative dipendenze.`);
+    } else {
+        console.log('Nessun dato di seed trovato. Procedo con la creazione.');
+    }
+
+    // 2. CREAZIONE O RECUPERO DISABILITÀ (Senza eliminare)
+    console.log('♿ Verifica tipologie di disabilità...');
     const disabilitiesData = [
         {
             name: 'Disabilità Motoria',
@@ -70,11 +86,13 @@ async function main() {
 
     const createdDisabilities = [];
     for (const d of disabilitiesData) {
-        createdDisabilities.push(await prisma.disability.create({data: d}));
+        let existing = await prisma.disability.findFirst({where: {name: d.name}});
+        existing ??= await prisma.disability.create({data: d});
+        createdDisabilities.push(existing);
     }
 
-    // 3. CREAZIONE TIPI DI BARRIERA
-    console.log('🚧 Creazione categorie di barriere...');
+    // 3. CREAZIONE O RECUPERO TIPI DI BARRIERA
+    console.log('🚧 Verifica categorie di barriere...');
     const barrierTypesData = [
         {label: 'Gradino / Scala', defaultDifficulty: 50, iconKey: 'Stairs', colorHex: '#EF4444'},
         {label: 'Ascensore Guasto', defaultDifficulty: 80, iconKey: 'Elevator', colorHex: '#F97316'},
@@ -82,142 +100,124 @@ async function main() {
         {label: 'Attraversamento Pericoloso', defaultDifficulty: 90, iconKey: 'MapPin', colorHex: '#3B82F6'}
     ];
 
-    const types = [];
+    const types: BarrierType[] = [];
     for (const bt of barrierTypesData) {
-        types.push(await prisma.barrierType.create({data: bt}));
+        let existing = await prisma.barrierType.findFirst({where: {label: bt.label}});
+        existing ??= await prisma.barrierType.create({data: bt});
+        types.push(existing);
     }
 
-    // 4. CREAZIONE UTENTI MOCK
-    console.log('👤 Creazione utenti...');
-    const adminId = crypto.randomUUID();
-    const user1Id = crypto.randomUUID();
-    const user2Id = crypto.randomUUID();
-
-    await prisma.user.create({
+    // 4. CREAZIONE NUOVI UTENTI MOCK (Con prefisso seed_)
+    console.log('👤 Creazione utenti seed...');
+    const admin = await prisma.user.create({
         data: {
-            id: adminId,
-            email: 'admin@inclusivecity.com',
+            id: crypto.randomUUID(),
+            email: 'seed_admin@inclusivecity.com',
             firstName: 'Admin',
-            lastName: 'Supremo',
+            lastName: 'Seed',
             role: 'ADMIN',
             reputationScore: 100,
             disabilityId: createdDisabilities[6].id
         }
     });
-    await prisma.user.create({
+    const user1 = await prisma.user.create({
         data: {
-            id: user1Id,
-            email: 'mario.rossi@example.com',
+            id: crypto.randomUUID(),
+            email: 'seed_mario.rossi@example.com',
             firstName: 'Mario',
-            lastName: 'Rossi',
+            lastName: 'Seed',
             role: 'USER',
             reputationScore: 25,
             disabilityId: createdDisabilities[1].id
         }
     });
-    await prisma.user.create({
+    const user2 = await prisma.user.create({
         data: {
-            id: user2Id,
-            email: 'giulia.bianchi@example.com',
+            id: crypto.randomUUID(),
+            email: 'seed_giulia.bianchi@example.com',
             firstName: 'Giulia',
-            lastName: 'Bianchi',
+            lastName: 'Seed',
             role: 'USER',
             reputationScore: 5,
             disabilityId: createdDisabilities[5].id
         }
     });
 
-    const userIds = [adminId, user1Id, user2Id];
+    const userIds = [admin.id, user1.id, user2.id];
 
-    // 5. CREAZIONE BARRIERE MANUALI
-    console.log('📍 Creazione barriere manuali sulla mappa...');
-    const barrier1Id = crypto.randomUUID();
-    const barrier2Id = crypto.randomUUID();
-    const barrier3Id = crypto.randomUUID();
+    // 5. BARRIERE MANUALI
+    console.log('📍 Creazione barriere manuali...');
+    const b1Id = crypto.randomUUID();
+    const b2Id = crypto.randomUUID();
+    const b3Id = crypto.randomUUID();
 
-    // Nota: diff da 3,4,5 a 50, 80, 90
-    await insertBarrierRaw(barrier1Id, 'Gradino alto ingresso negozio', 'C\'è un gradino di 15cm senza rampa.', 'Piazza del Duomo, Milano', 50, 45.4642, 9.1899, 'ACTIVE', user1Id, types[0].id);
-    await insertBarrierRaw(barrier2Id, 'Lavori in corso bloccano marciapiede', 'Transenne ovunque, impossibile passare.', 'Piazza del Colosseo, Roma', 80, 41.8902, 12.4922, 'IN_REVIEW', user2Id, types[2].id);
-    await insertBarrierRaw(barrier3Id, 'Ascensore Metro guasto', 'Ascensore fermo da due settimane.', 'Piazza del Plebiscito, Napoli', 90, 40.8359, 14.2488, 'RESOLVED', user1Id, types[1].id);
+    await insertBarrierRaw(b1Id, 'Gradino alto ingresso negozio', 'C\'è un gradino di 15cm senza rampa.', 'Piazza del Duomo, Milano', 50, 45.4642, 9.1899, 'ACTIVE', user1.id, types[0].id);
+    await insertBarrierRaw(b2Id, 'Lavori in corso bloccano marciapiede', 'Transenne ovunque, impossibile passare.', 'Piazza del Colosseo, Roma', 80, 41.8902, 12.4922, 'IN_REVIEW', user2.id, types[2].id);
+    await insertBarrierRaw(b3Id, 'Ascensore Metro guasto', 'Ascensore fermo.', 'Piazza del Plebiscito, Napoli', 90, 40.8359, 14.2488, 'RESOLVED', user1.id, types[1].id);
 
-    // 6. GENERAZIONE MASSIVA: 100 A MILANO
-    console.log('🏙️ Generazione di 100 barriere casuali a Milano...');
-    const states = ['ACTIVE', 'ACTIVE', 'ACTIVE', 'IN_REVIEW', 'RESOLVED']; // Più probabilità che siano ACTIVE
+    // 6. GENERAZIONE MASSIVA (MILANO E ANTEGNATE)
+    console.log('🏙️ Generazione massiva barriere (Milano e Antegnate)...');
 
-    for (let i = 0; i < 100; i++) {
-        const t = types[Math.floor(Math.random() * types.length)];
-        const u = userIds[Math.floor(Math.random() * userIds.length)];
-        const s = states[Math.floor(Math.random() * states.length)];
+    // Probabilità aumentata per lo stato IN_REVIEW
+    const states = ['ACTIVE', 'ACTIVE', 'IN_REVIEW', 'IN_REVIEW', 'RESOLVED'];
 
-        // Varia la difficoltà di default del +- 15
-        let diff = t.defaultDifficulty + Math.floor(getRandomInRange(-15, 15));
-        diff = Math.max(0, Math.min(100, diff)); // Assicura che sia tra 0 e 100
+    const generateBarriers = async (count: number, latMin: number, latMax: number, lngMin: number, lngMax: number, city: string) => {
+        for (let i = 0; i < count; i++) {
+            const t = types[Math.floor(Math.random() * types.length)];
+            const u = userIds[Math.floor(Math.random() * userIds.length)];
+            const state = states[Math.floor(Math.random() * states.length)];
 
-        // Coordinate indicative di Milano (da San Siro a Lambrate circa)
-        const lat = getRandomInRange(45.43, 45.5);
-        const lng = getRandomInRange(9.12, 9.24);
+            let diff = t.defaultDifficulty + Math.floor(getRandomInRange(-15, 15));
+            diff = Math.max(0, Math.min(100, diff));
 
-        await insertBarrierRaw(
-            crypto.randomUUID(),
-            `${t.label} Segnalato`,
-            `Barriera generata automaticamente per test di carico mappa.`,
-            'Milano, MI',
-            diff, lat, lng, s, u, t.id
-        );
-    }
+            const lat = getRandomInRange(latMin, latMax);
+            const lng = getRandomInRange(lngMin, lngMax);
+            const barrierId = crypto.randomUUID();
 
-    // 7. GENERAZIONE MASSIVA: 10 AD ANTEGNATE
-    console.log('🏘️ Generazione di 10 barriere casuali ad Antegnate...');
-    for (let i = 0; i < 10; i++) {
-        const t = types[Math.floor(Math.random() * types.length)];
-        const u = userIds[Math.floor(Math.random() * userIds.length)];
-        const s = states[Math.floor(Math.random() * states.length)];
+            await insertBarrierRaw(
+                barrierId,
+                `${t.label} Segnalato`,
+                `Barriera generata automaticamente per test di carico.`,
+                `${city}, Italia`,
+                diff, lat, lng, state, u, t.id
+            );
 
-        let diff = t.defaultDifficulty + Math.floor(getRandomInRange(-15, 15));
-        diff = Math.max(0, Math.min(100, diff));
+            // Se la barriera nasce in stato IN_REVIEW, creiamo un Report per giustificarlo!
+            if (state === 'IN_REVIEW') {
+                await prisma.report.create({
+                    data: {reason: 'DOES_NOT_EXIST', status: 'PENDING', userId: u, barrierId: barrierId}
+                });
+            }
+        }
+    };
 
-        // Coordinate indicative per Antegnate (BG)
-        const lat = getRandomInRange(45.475, 45.49);
-        const lng = getRandomInRange(9.77, 9.795);
+    // 100 barriere a Milano
+    await generateBarriers(100, 45.4300, 45.5000, 9.1200, 9.2400, "Milano");
+    // 10 barriere ad Antegnate
+    await generateBarriers(10, 45.4750, 45.4900, 9.7700, 9.7950, "Antegnate");
 
-        await insertBarrierRaw(
-            crypto.randomUUID(),
-            `Problema ad Antegnate: ${t.label}`,
-            `Segnalazione fittizia generata in zona Antegnate.`,
-            'Antegnate, BG',
-            diff, lat, lng, s, u, t.id
-        );
-    }
-
-    // 8. INTERAZIONI MOCK SULLE BARRIERE ORIGINALI
-    console.log('💬 Aggiunta di recensioni, segnalazioni e risoluzioni...');
+    // 7. INTERAZIONI MOCK SULLE BARRIERE MANUALI
+    console.log('💬 Aggiunta recensioni e segnalazioni extra...');
     await prisma.feedback.create({
         data: {
             rating: 4,
             comment: 'Confermo, molto scomodo.',
-            userId: user2Id,
-            barrierId: barrier1Id
+            userId: user2.id,
+            barrierId: b1Id
         }
     });
-    await prisma.report.create({
-        data: {
-            reason: 'DOES_NOT_EXIST',
-            status: 'PENDING',
-            userId: user1Id,
-            barrierId: barrier2Id
-        }
-    });
+    await prisma.report.create({data: {reason: 'OTHER', status: 'PENDING', userId: user1.id, barrierId: b2Id}});
     await prisma.resolution.create({
         data: {
             status: 'PENDING',
             evidenceUrl: 'https://placehold.co/600x400/png',
-            comment: 'Hanno messo la pedana mobile!',
-            userId: user2Id,
-            barrierId: barrier1Id
+            comment: 'Risolto!',
+            userId: user2.id,
+            barrierId: b1Id
         }
     });
 
-    console.log('✅ Seeding completato con successo!');
+    console.log('✅ Seeding Non-Distruttivo completato con successo!');
 }
 
 main()
