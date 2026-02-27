@@ -7,6 +7,8 @@ import {VitePWA} from "vite-plugin-pwa";
 export default defineConfig({
     server: {
         host: true,
+        strictPort: true,
+        allowedHosts: ['.trycloudflare.com']
     },
     plugins: [
         tailwindcss(),

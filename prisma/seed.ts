@@ -1,13 +1,33 @@
 import {PrismaClient} from '@prisma/client';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 const prisma = new PrismaClient();
+
+// Funzione helper per ottenere un numero casuale in un range
+function getRandomInRange(min: number, max: number) {
+    return Math.random() * (max - min) + min;
+}
+
+// Helper per inserire rapidamente barriere usando raw SQL
+async function insertBarrierRaw( // NOSONAR
+    id: string, title: string, description: string, address: string,
+    difficulty: number, lat: number, lng: number, state: string,
+    userId: string, typeId: string
+) {
+    await prisma.$executeRaw`
+        INSERT INTO "Barrier" (id, title, description, address, "photoUrls", difficulty, location, state, "userId",
+                               "typeId", "updatedAt")
+        VALUES (${id}::uuid, ${title}, ${description}, ${address},
+                ARRAY['https://placehold.co/600x400/png']::text[], ${difficulty},
+                ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326),
+                ${state}::"BarrierState", ${userId}::uuid, ${typeId}, NOW());
+    `;
+}
 
 async function main() {
     console.log('🌱 Inizio del Seeding completo del Database...');
 
     // 1. PULIZIA PROFONDA DEL DATABASE
-    // Usiamo TRUNCATE CASCADE per piallare tutte le tabelle istantaneamente ignorando i vincoli di chiave esterna
     console.log('🧹 Pulizia delle tabelle in corso...');
     await prisma.$executeRaw`TRUNCATE TABLE "Notification", "Resolution", "Report", "Feedback", "Barrier", "DeviceToken", "User", "BarrierType", "Disability" CASCADE;`;
 
@@ -56,39 +76,19 @@ async function main() {
     // 3. CREAZIONE TIPI DI BARRIERA
     console.log('🚧 Creazione categorie di barriere...');
     const barrierTypesData = [
-        {
-            label: 'Gradino / Scala',
-            defaultDifficulty: 50, // Richiede almeno mobilità 50 (esclude sedie a rotelle 0 e passeggini 40, accessibile a fatica per disabilità motoria 50)
-            iconKey: 'Stairs',
-            colorHex: '#EF4444'
-        },
-        {
-            label: 'Ascensore Guasto',
-            defaultDifficulty: 80, // Costringe all'uso delle scale, richiede mobilità molto alta (esclude motoria grave, passeggini, ecc.)
-            iconKey: 'Elevator',
-            colorHex: '#F97316'
-        },
-        {
-            label: 'Ostacolo sul marciapiede',
-            defaultDifficulty: 40, // Richiede deviazioni o scendere dal marciapiede (blocca chi ha mobilità 0, ma superabile da passeggini 40 in su)
-            iconKey: 'AlertTriangle',
-            colorHex: '#EAB308'
-        },
-        {
-            label: 'Attraversamento Pericoloso',
-            defaultDifficulty: 90, // Manca semaforo o strisce sbiadite. Richiede ottimi riflessi e sensi (blocca disabilità visiva 80, richiede mobilità 90/100)
-            iconKey: 'MapPin',
-            colorHex: '#3B82F6'
-        }
+        {label: 'Gradino / Scala', defaultDifficulty: 50, iconKey: 'Stairs', colorHex: '#EF4444'},
+        {label: 'Ascensore Guasto', defaultDifficulty: 80, iconKey: 'Elevator', colorHex: '#F97316'},
+        {label: 'Ostacolo sul marciapiede', defaultDifficulty: 40, iconKey: 'AlertTriangle', colorHex: '#EAB308'},
+        {label: 'Attraversamento Pericoloso', defaultDifficulty: 90, iconKey: 'MapPin', colorHex: '#3B82F6'}
     ];
 
     const types = [];
     for (const bt of barrierTypesData) {
-        types.push(await prisma.barrierType.create({ data: bt }));
+        types.push(await prisma.barrierType.create({data: bt}));
     }
 
     // 4. CREAZIONE UTENTI MOCK
-    console.log('👤 Creazione utenti (Admin e normali)...');
+    console.log('👤 Creazione utenti...');
     const adminId = crypto.randomUUID();
     const user1Id = crypto.randomUUID();
     const user2Id = crypto.randomUUID();
@@ -127,56 +127,86 @@ async function main() {
         }
     });
 
-    // 5. CREAZIONE BARRIERE (Con coordinate PostGIS tramite query SQL grezza)
-    console.log('📍 Creazione barriere sulla mappa...');
-    const barrier1Id = crypto.randomUUID(); // Barriera Attiva
-    const barrier2Id = crypto.randomUUID(); // Barriera in revisione
-    const barrier3Id = crypto.randomUUID(); // Barriera risolta
+    const userIds = [adminId, user1Id, user2Id];
 
-    // Barriera 1: Milano - Duomo (Attiva)
-    await prisma.$executeRaw`
-        INSERT INTO "Barrier" (id, title, description, address, "photoUrls", difficulty, location, state, "userId",
-                               "typeId", "updatedAt")
-        VALUES (${barrier1Id}, 'Gradino alto ingresso negozio', 'C''è un gradino di 15cm senza rampa.',
-                'Piazza del Duomo, Milano',
-                ARRAY['https://placehold.co/600x400/png']::text[], 3, ST_SetSRID(ST_MakePoint(9.1899, 45.4642), 4326),
-                'ACTIVE'::"BarrierState", ${user1Id}::uuid, ${types[0].id}, NOW());
-    `;
+    // 5. CREAZIONE BARRIERE MANUALI
+    console.log('📍 Creazione barriere manuali sulla mappa...');
+    const barrier1Id = crypto.randomUUID();
+    const barrier2Id = crypto.randomUUID();
+    const barrier3Id = crypto.randomUUID();
 
-    // Barriera 2: Roma - Colosseo (In Review - Ha ricevuto segnalazioni)
-    await prisma.$executeRaw`
-        INSERT INTO "Barrier" (id, title, description, address, "photoUrls", difficulty, location, state, "userId",
-                               "typeId", "updatedAt")
-        VALUES (${barrier2Id}, 'Lavori in corso bloccano marciapiede', 'Transenne ovunque, impossibile passare.',
-                'Piazza del Colosseo, Roma',
-                ARRAY['https://placehold.co/600x400/png']::text[], 4, ST_SetSRID(ST_MakePoint(12.4922, 41.8902), 4326),
-                'IN_REVIEW'::"BarrierState", ${user2Id}::uuid, ${types[2].id}, NOW());
-    `;
+    // Nota: diff da 3,4,5 a 50, 80, 90
+    await insertBarrierRaw(barrier1Id, 'Gradino alto ingresso negozio', 'C\'è un gradino di 15cm senza rampa.', 'Piazza del Duomo, Milano', 50, 45.4642, 9.1899, 'ACTIVE', user1Id, types[0].id);
+    await insertBarrierRaw(barrier2Id, 'Lavori in corso bloccano marciapiede', 'Transenne ovunque, impossibile passare.', 'Piazza del Colosseo, Roma', 80, 41.8902, 12.4922, 'IN_REVIEW', user2Id, types[2].id);
+    await insertBarrierRaw(barrier3Id, 'Ascensore Metro guasto', 'Ascensore fermo da due settimane.', 'Piazza del Plebiscito, Napoli', 90, 40.8359, 14.2488, 'RESOLVED', user1Id, types[1].id);
 
-    // Barriera 3: Napoli - Plebiscito (Risolta)
-    await prisma.$executeRaw`
-        INSERT INTO "Barrier" (id, title, description, address, "photoUrls", difficulty, location, state, "userId",
-                               "typeId", "updatedAt")
-        VALUES (${barrier3Id}, 'Ascensore Metro guasto', 'Ascensore fermo da due settimane.',
-                'Piazza del Plebiscito, Napoli',
-                ARRAY['https://placehold.co/600x400/png']::text[], 5, ST_SetSRID(ST_MakePoint(14.2488, 40.8359), 4326),
-                'RESOLVED'::"BarrierState", ${user1Id}::uuid, ${types[1].id}, NOW());
-    `;
+    // 6. GENERAZIONE MASSIVA: 100 A MILANO
+    console.log('🏙️ Generazione di 100 barriere casuali a Milano...');
+    const states = ['ACTIVE', 'ACTIVE', 'ACTIVE', 'IN_REVIEW', 'RESOLVED']; // Più probabilità che siano ACTIVE
 
-    // 6. INTERAZIONI: FEEDBACK, REPORT E RESOLUTION
+    for (let i = 0; i < 100; i++) {
+        const t = types[Math.floor(Math.random() * types.length)];
+        const u = userIds[Math.floor(Math.random() * userIds.length)];
+        const s = states[Math.floor(Math.random() * states.length)];
+
+        // Varia la difficoltà di default del +- 15
+        let diff = t.defaultDifficulty + Math.floor(getRandomInRange(-15, 15));
+        diff = Math.max(0, Math.min(100, diff)); // Assicura che sia tra 0 e 100
+
+        // Coordinate indicative di Milano (da San Siro a Lambrate circa)
+        const lat = getRandomInRange(45.43, 45.5);
+        const lng = getRandomInRange(9.12, 9.24);
+
+        await insertBarrierRaw(
+            crypto.randomUUID(),
+            `${t.label} Segnalato`,
+            `Barriera generata automaticamente per test di carico mappa.`,
+            'Milano, MI',
+            diff, lat, lng, s, u, t.id
+        );
+    }
+
+    // 7. GENERAZIONE MASSIVA: 10 AD ANTEGNATE
+    console.log('🏘️ Generazione di 10 barriere casuali ad Antegnate...');
+    for (let i = 0; i < 10; i++) {
+        const t = types[Math.floor(Math.random() * types.length)];
+        const u = userIds[Math.floor(Math.random() * userIds.length)];
+        const s = states[Math.floor(Math.random() * states.length)];
+
+        let diff = t.defaultDifficulty + Math.floor(getRandomInRange(-15, 15));
+        diff = Math.max(0, Math.min(100, diff));
+
+        // Coordinate indicative per Antegnate (BG)
+        const lat = getRandomInRange(45.475, 45.49);
+        const lng = getRandomInRange(9.77, 9.795);
+
+        await insertBarrierRaw(
+            crypto.randomUUID(),
+            `Problema ad Antegnate: ${t.label}`,
+            `Segnalazione fittizia generata in zona Antegnate.`,
+            'Antegnate, BG',
+            diff, lat, lng, s, u, t.id
+        );
+    }
+
+    // 8. INTERAZIONI MOCK SULLE BARRIERE ORIGINALI
     console.log('💬 Aggiunta di recensioni, segnalazioni e risoluzioni...');
-
-    // Feedback sulla Barriera 1
     await prisma.feedback.create({
-        data: {rating: 4, comment: 'Confermo, molto scomodo.', userId: user2Id, barrierId: barrier1Id}
+        data: {
+            rating: 4,
+            comment: 'Confermo, molto scomodo.',
+            userId: user2Id,
+            barrierId: barrier1Id
+        }
     });
-
-    // Report (Segnalazioni) sulla Barriera 2 per giustificare lo stato 'IN_REVIEW'
     await prisma.report.create({
-        data: {reason: 'DOES_NOT_EXIST', status: 'PENDING', userId: user1Id, barrierId: barrier2Id}
+        data: {
+            reason: 'DOES_NOT_EXIST',
+            status: 'PENDING',
+            userId: user1Id,
+            barrierId: barrier2Id
+        }
     });
-
-    // Resolution finta e PENDING sulla Barriera 1 (in attesa di admin)
     await prisma.resolution.create({
         data: {
             status: 'PENDING',
@@ -195,6 +225,6 @@ main()
         console.error('❌ Errore durante il seeding:', e);
         process.exit(1);
     })
-    .finally(async () => {
+    .finally(async () => { // NOSONAR
         await prisma.$disconnect();
     });

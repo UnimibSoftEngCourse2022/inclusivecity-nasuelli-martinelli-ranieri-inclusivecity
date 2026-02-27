@@ -78,3 +78,21 @@ html, body {
         padding-bottom: env(safe-area-inset-bottom);
     }
 }
+
+/* --- OVERRIDE MAPBOX POPUP (Tema InclusiveCity) --- */
+.mapboxgl-popup-content {
+    background: var(--surface) !important;
+    padding: 0 !important; /* Rimuove lo spazio bianco di default */
+    border-radius: 0.75rem !important; /* Arrotonda gli angoli come rounded-xl */
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+/* Colora la "freccetta" in basso del popup in base al tema */
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+    border-top-color: var(--border) !important;
+}
+
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+    border-bottom-color: var(--border) !important;
+}

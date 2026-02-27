@@ -11,6 +11,9 @@ const envSchema = z.object({
     VITE_FIREBASE_MEASUREMENT_ID: z.string(),
     VITE_FIREBASE_VAPID_KEY: z.string(),
 
+    // Mapbox
+    VITE_MAPBOX_TOKEN: z.string(),
+
     // Supabase
     VITE_SUPABASE_URL: z.url(),
     VITE_SUPABASE_ANON_KEY: z.string(),
