@@ -1,12 +1,11 @@
-import { useAuth } from "~/context/AuthContext";
-import { LogOut, Shield, MapPin } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import {useAuth} from "~/context/AuthContext";
+import {LogOut, Shield} from "lucide-react";
+import {Link, useNavigate} from "react-router-dom";
 
 export default function ProfilePage() {
     const navigate = useNavigate();
 
-    const { profile, signOut } = useAuth();
+    const {profile, signOut} = useAuth();
 
     const isAdmin = profile?.role === "ADMIN";
 
@@ -33,11 +32,11 @@ export default function ProfilePage() {
 
                 {/* --- COLLEGAMENTO ALLA PAGINA DI MODIFICA --- */}
                 <Link
-                   to="/app/profilesettings"
-                className="inline-block mt-2 text-primary font-medium hover:underline"
+                    to="/app/profilesettings"
+                    className="inline-block mt-2 text-primary font-medium hover:underline"
                 >
-                  Modifica profilo
-                
+                    Modifica profilo
+
                 </Link>
 
             </section>
@@ -49,31 +48,31 @@ export default function ProfilePage() {
                         to="/admin"
                         className="flex items-center gap-3 p-2 hover:bg-primary/10 rounded-lg transition"
                     >
-                        <Shield className="w-5 h-5 text-primary" />
+                        <Shield className="w-5 h-5 text-primary"/>
                         <span className="font-medium">Vai alla sezione Admin</span>
                     </Link>
                 </section>
             )}
-{/* --- LE MIE BARRIERE --- */}
-          <section className="bg-surface rounded-xl border border-border p-4 shadow-sm space-y-3 mt-6">
-  <h2 className="text-lg font-semibold text-text">Barriere</h2>
-  <div className="flex flex-col space-y-3">
-  <button
-    onClick={() => navigate("/app/mybarriers")}
-    className="text-primary font-medium hover:underline text-left"
-  >
-    Mostra barriere segnalate da me
-  </button>
+            {/* --- LE MIE BARRIERE --- */}
+            <section className="bg-surface rounded-xl border border-border p-4 shadow-sm space-y-3 mt-6">
+                <h2 className="text-lg font-semibold text-text">Barriere</h2>
+                <div className="flex flex-col space-y-3">
+                    <button
+                        onClick={() => navigate("/app/mybarriers")}
+                        className="text-primary font-medium hover:underline text-left"
+                    >
+                        Mostra barriere segnalate da me
+                    </button>
 
-  <button
-    onClick={() => navigate("/app/allbarriers")}
-    className="text-primary font-medium hover:underline text-left"
-  >
-    Mostra tutte le barriere
-  </button>
-  </div>
-</section>
- 
+                    <button
+                        onClick={() => navigate("/app/allbarriers")}
+                        className="text-primary font-medium hover:underline text-left"
+                    >
+                        Mostra tutte le barriere
+                    </button>
+                </div>
+            </section>
+
 
             {/* --- LOGOUT --- */}
             <section className="bg-surface rounded-xl border border-border overflow-hidden shadow-sm">
@@ -81,7 +80,7 @@ export default function ProfilePage() {
                     onClick={signOut}
                     className="w-full flex items-center gap-3 p-4 text-left text-error hover:bg-error/5 transition-colors"
                 >
-                    <LogOut className="w-5 h-5" />
+                    <LogOut className="w-5 h-5"/>
                     <span className="font-medium">Esci dall'account</span>
                 </button>
             </section>

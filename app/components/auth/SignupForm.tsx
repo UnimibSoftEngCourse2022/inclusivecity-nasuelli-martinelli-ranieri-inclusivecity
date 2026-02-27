@@ -88,37 +88,49 @@ export default function SignUpForm() {
                 <div className="grid grid-cols-2 gap-4">
                     {/* Nome */}
                     <div>
-                        <label className={labelClass}>Nome</label>
-                        <input {...register("firstName")} type="text" className={inputClass} placeholder="Mario" />
+                        <label className={labelClass}>
+                            <input {...register("firstName")} type="text" className={inputClass} placeholder="Mario"/>
+                            Nome
+                        </label>
                         {errors.firstName && <p className={errorClass}>{errors.firstName.message}</p>}
                     </div>
 
                     {/* Cognome */}
                     <div>
-                        <label className={labelClass}>Cognome</label>
-                        <input {...register("lastName")} type="text" className={inputClass} placeholder="Rossi" />
+                        <label className={labelClass}>
+                            <input {...register("lastName")} type="text" className={inputClass} placeholder="Rossi"/>
+                            Cognome
+                        </label>
                         {errors.lastName && <p className={errorClass}>{errors.lastName.message}</p>}
                     </div>
                 </div>
 
                 {/* Email */}
                 <div>
-                    <label className={labelClass}>Email</label>
-                    <input {...register("email")} type="email" className={inputClass} placeholder="nome@esempio.com" />
+                    <label className={labelClass}>
+                        <input {...register("email")} type="email" className={inputClass}
+                               placeholder="nome@esempio.com"/>
+                        Email
+                    </label>
                     {errors.email && <p className={errorClass}>{errors.email.message}</p>}
                 </div>
 
                 {/* Password */}
                 <div>
-                    <label className={labelClass}>Password</label>
-                    <input {...register("password")} type="password" className={inputClass} placeholder="••••••" />
+                    <label className={labelClass}>
+                        <input {...register("password")} type="password" className={inputClass} placeholder="••••••"/>
+                        Password
+                    </label>
                     {errors.password && <p className={errorClass}>{errors.password.message}</p>}
                 </div>
 
                 {/* Conferma Password */}
                 <div>
-                    <label className={labelClass}>Conferma Password</label>
-                    <input {...register("confirmPassword")} type="password" className={inputClass} placeholder="••••••" />
+                    <label className={labelClass}>
+                        <input {...register("confirmPassword")} type="password" className={inputClass}
+                               placeholder="••••••"/>
+                        Conferma Password
+                    </label>
                     {errors.confirmPassword && <p className={errorClass}>{errors.confirmPassword.message}</p>}
                 </div>
 
@@ -133,7 +145,7 @@ export default function SignUpForm() {
             </form>
 
             {/* Google Login */}
-            <SocialLogin />
+            <SocialLogin/>
         </div>
     );
 }
