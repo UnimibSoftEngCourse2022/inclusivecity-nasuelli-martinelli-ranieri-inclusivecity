@@ -1,6 +1,6 @@
 import {Link} from "react-router";
 import {Popup} from "react-map-gl";
-import {ChevronRight, MapPin, ShieldAlert} from "lucide-react";
+import {AlertTriangle, ChevronRight, MapPin, ShieldAlert} from "lucide-react";
 import type {BarrierMapData} from "~/types/barrier";
 
 type Props = {
@@ -10,6 +10,8 @@ type Props = {
 
 export default function BarrierMapBanner({barrier, onClose}: Readonly<Props>) {
     if (!barrier) return null;
+
+    const isReview = barrier.state === 'IN_REVIEW';
 
     return (
         <Popup
@@ -23,26 +25,34 @@ export default function BarrierMapBanner({barrier, onClose}: Readonly<Props>) {
             className="z-20"
             maxWidth="280px"
         >
-            <div className="flex flex-col w-full min-w-[240px]">
+            <div className="flex flex-col w-full min-w-60">
 
-                {/* Immagine di Copertina Edge-to-Edge */}
-                {barrier.image ? (
-                    <img
-                        src={barrier.image}
-                        alt="Barriera"
-                        className="w-full h-32 object-cover rounded-t-xl"
-                    />
-                ) : (
-                    <div
-                        className="w-full h-24 bg-surface flex items-center justify-center rounded-t-xl border-b border-border">
-                        <ShieldAlert className="w-8 h-8 text-text-muted opacity-50"/>
-                    </div>
-                )}
+                {/* HEADER IMMAGINE */}
+                <div className="relative w-full h-32 bg-surface rounded-t-xl border-b border-border">
+                    {barrier.image ? (
+                        <img
+                            src={barrier.image}
+                            alt="Barriera"
+                            className="w-full h-full object-cover rounded-t-xl"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <ShieldAlert className="w-8 h-8 text-text-muted opacity-50"/>
+                        </div>
+                    )}
 
-                {/* Contenuto Card */}
+                    {/* BADGE IN_REVIEW SOVRAPPOSTO ALL'IMMAGINE */}
+                    {isReview && (
+                        <div
+                            className="absolute top-2 right-2 bg-orange-500/90 backdrop-blur-sm text-white px-2 py-1 rounded-md shadow-sm flex items-center gap-1.5 border border-white/20">
+                            <AlertTriangle className="w-4 h-4"/>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">In Verifica</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* --- CONTENUTO CARD --- */}
                 <div className="p-4 flex flex-col gap-3">
-
-                    {/* Titolo e Badge Difficoltà */}
                     <div className="flex items-start justify-between gap-3">
                         <h3 className="font-bold text-base text-text leading-tight line-clamp-2">
                             {barrier.title}
@@ -53,13 +63,11 @@ export default function BarrierMapBanner({barrier, onClose}: Readonly<Props>) {
                         </span>
                     </div>
 
-                    {/* Indirizzo */}
                     <div className="flex items-center gap-1.5 text-text-muted">
                         <MapPin className="w-4 h-4 shrink-0"/>
                         <p className="text-xs truncate">{barrier.address}</p>
                     </div>
 
-                    {/* Bottone Azione */}
                     <Link
                         to={`/app/barriers/${barrier.id}`}
                         className="mt-1 flex items-center justify-center gap-1 w-full bg-primary/10 hover:bg-primary/20 text-primary py-2.5 rounded-lg text-sm font-semibold transition-colors"

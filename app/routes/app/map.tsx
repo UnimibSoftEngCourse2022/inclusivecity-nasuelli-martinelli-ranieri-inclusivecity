@@ -1,12 +1,14 @@
 import {useEffect, useRef, useState} from "react";
 import {Link, type LoaderFunctionArgs, useFetcher, useLoaderData} from "react-router";
-import Map, {GeolocateControl, Marker, NavigationControl} from "react-map-gl";
+import Map, {GeolocateControl, NavigationControl} from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {Filter, Plus, Search} from "lucide-react";
 import {prisma} from "~/db.server";
 import BarrierMapBanner from "~/components/map/BarrierMapBanner";
 import Loading from "~/components/Loading";
 import type {BarrierMapData} from "~/types/barrier";
+import {useAuth} from "~/context/AuthContext";
+import BarrierMarker from "~/components/map/BarrierMarker";
 
 
 export async function loader({request}: LoaderFunctionArgs) {
@@ -15,22 +17,39 @@ export async function loader({request}: LoaderFunctionArgs) {
     const minLat = url.searchParams.get("minLat");
     const maxLng = url.searchParams.get("maxLng");
     const maxLat = url.searchParams.get("maxLat");
+    const userId = url.searchParams.get("userId");
 
     let barriers: BarrierMapData[] = [];
+    let userMobilityLevel = 0;
+
+    if (userId) {
+        const user = await prisma.user.findUnique({
+            where: {id: userId},
+            include: {disability: true}
+        });
+        if (user?.disability) {
+            userMobilityLevel = user.disability.mobilityLevel;
+        }
+    }
 
     if (minLng && minLat && maxLng && maxLat) {
         barriers = await prisma.$queryRaw<Array<BarrierMapData>>`
-            SELECT id,
-                   title,
-                   address,
-                   difficulty,
-                   "photoUrls"[1]           as image,
-                   ST_X(location::geometry) as lng,
-                   ST_Y(location::geometry) as lat
-            FROM "Barrier"
-            WHERE (state = 'ACTIVE' OR state = 'IN_REVIEW')
+            SELECT b.id,
+                   b.title,
+                   b.address,
+                   b.difficulty,
+                   b.state,
+                   b."photoUrls"[1]           as image,
+                   ST_X(b.location::geometry) as lng,
+                   ST_Y(b.location::geometry) as lat,
+                   bt."iconKey"               as "iconKey",
+                   bt."colorHex"              as "colorHex"
+            FROM "Barrier" b
+                     JOIN "BarrierType" bt ON b."typeId" = bt.id
+            WHERE (b.state = 'ACTIVE' OR b.state = 'IN_REVIEW')
+              AND b.difficulty >= ${userMobilityLevel}
               AND ST_Intersects(
-                    location::geometry,
+                    b.location::geometry,
                     ST_MakeEnvelope(${Number.parseFloat(minLng)}, ${Number.parseFloat(minLat)},
                                     ${Number.parseFloat(maxLng)}, ${Number.parseFloat(maxLat)}, 4326)
                   )
@@ -42,6 +61,7 @@ export async function loader({request}: LoaderFunctionArgs) {
 }
 
 export default function MapPage() {
+    const {profile} = useAuth();
     const initialData = useLoaderData<typeof loader>();
 
     const fetcher = useFetcher<typeof loader>();
@@ -86,7 +106,18 @@ export default function MapPage() {
 
         const bounds = mapRef.current.getMap().getBounds();
 
-        fetcher.load(`/app/map?minLng=${bounds.getWest()}&minLat=${bounds.getSouth()}&maxLng=${bounds.getEast()}&maxLat=${bounds.getNorth()}`);
+        const params = new URLSearchParams({
+            minLng: bounds.getWest().toString(),
+            minLat: bounds.getSouth().toString(),
+            maxLng: bounds.getEast().toString(),
+            maxLat: bounds.getNorth().toString(),
+        });
+
+        if (profile?.id) {
+            params.append("userId", profile.id);
+        }
+
+        fetcher.load(`/app/map?${params.toString()}`);
     };
 
     const onMapLoad = () => {
@@ -145,18 +176,11 @@ export default function MapPage() {
 
                 {/* MARKERS */}
                 {barriers.map((barrier) => (
-                    <Marker
-                        key={barrier.id} longitude={barrier.lng} latitude={barrier.lat}
-                        onClick={e => {
-                            e.originalEvent.stopPropagation();
-                            setSelectedBarrier(barrier);
-                        }}
-                    >
-                        <div
-                            className="w-8 h-8 bg-error text-white rounded-full flex items-center justify-center shadow-lg border-2 border-surface cursor-pointer transform hover:scale-110 transition">
-                            <span className="font-bold text-sm">{barrier.difficulty}</span>
-                        </div>
-                    </Marker>
+                    <BarrierMarker
+                        key={barrier.id}
+                        barrier={barrier}
+                        onClick={setSelectedBarrier}
+                    />
                 ))}
 
                 {/* BANNER BARRIERA */}

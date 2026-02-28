@@ -1,5 +1,5 @@
 import {type BarrierType, PrismaClient} from '@prisma/client';
-import crypto from 'node:crypto';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -91,19 +91,32 @@ async function main() {
         createdDisabilities.push(existing);
     }
 
-    // 3. CREAZIONE O RECUPERO TIPI DI BARRIERA
+    // 3. CREAZIONE O RECUPERO TIPI DI BARRIERA (Ampliati)
     console.log('🚧 Verifica categorie di barriere...');
     const barrierTypesData = [
-        {label: 'Gradino / Scala', defaultDifficulty: 50, iconKey: 'Stairs', colorHex: '#EF4444'},
-        {label: 'Ascensore Guasto', defaultDifficulty: 80, iconKey: 'Elevator', colorHex: '#F97316'},
+        {label: 'Gradino / Scala', defaultDifficulty: 50, iconKey: 'TrendingUp', colorHex: '#EF4444'},
+        {label: 'Ascensore Guasto', defaultDifficulty: 80, iconKey: 'ArrowUpDown', colorHex: '#F97316'},
         {label: 'Ostacolo sul marciapiede', defaultDifficulty: 40, iconKey: 'AlertTriangle', colorHex: '#EAB308'},
-        {label: 'Attraversamento Pericoloso', defaultDifficulty: 90, iconKey: 'MapPin', colorHex: '#3B82F6'}
+        {label: 'Attraversamento Pericoloso', defaultDifficulty: 90, iconKey: 'AlertOctagon', colorHex: '#3B82F6'},
+        {label: 'Porta Stretta / Inaccessibile', defaultDifficulty: 50, iconKey: 'DoorClosed', colorHex: '#8B5CF6'},
+        {label: 'Pavimentazione Sconnessa', defaultDifficulty: 40, iconKey: 'Grip', colorHex: '#A16207'},
+        {label: 'Rampa Troppo Ripida', defaultDifficulty: 60, iconKey: 'Activity', colorHex: '#E11D48'},
+        {label: 'Semaforo Senza Segnale Acustico', defaultDifficulty: 80, iconKey: 'VolumeX', colorHex: '#06B6D4'},
+        {label: 'Mancanza Percorso Tattile', defaultDifficulty: 80, iconKey: 'MoreHorizontal', colorHex: '#4F46E5'},
+        {label: 'Parcheggio Disabili Bloccato', defaultDifficulty: 60, iconKey: 'CarFront', colorHex: '#0284C7'}
     ];
 
     const types: BarrierType[] = [];
     for (const bt of barrierTypesData) {
         let existing = await prisma.barrierType.findFirst({where: {label: bt.label}});
-        existing ??= await prisma.barrierType.create({data: bt});
+        if (existing) {
+            existing = await prisma.barrierType.update({
+                where: {id: existing.id},
+                data: {iconKey: bt.iconKey, colorHex: bt.colorHex}
+            });
+        } else {
+            existing = await prisma.barrierType.create({data: bt});
+        }
         types.push(existing);
     }
 
@@ -155,10 +168,8 @@ async function main() {
     await insertBarrierRaw(b2Id, 'Lavori in corso bloccano marciapiede', 'Transenne ovunque, impossibile passare.', 'Piazza del Colosseo, Roma', 80, 41.8902, 12.4922, 'IN_REVIEW', user2.id, types[2].id);
     await insertBarrierRaw(b3Id, 'Ascensore Metro guasto', 'Ascensore fermo.', 'Piazza del Plebiscito, Napoli', 90, 40.8359, 14.2488, 'RESOLVED', user1.id, types[1].id);
 
-    // 6. GENERAZIONE MASSIVA (MILANO E ANTEGNATE)
+    // 6. GENERAZIONE MASSIVA
     console.log('🏙️ Generazione massiva barriere (Milano e Antegnate)...');
-
-    // Probabilità aumentata per lo stato IN_REVIEW
     const states = ['ACTIVE', 'ACTIVE', 'IN_REVIEW', 'IN_REVIEW', 'RESOLVED'];
 
     const generateBarriers = async (count: number, latMin: number, latMax: number, lngMin: number, lngMax: number, city: string) => {
@@ -175,28 +186,26 @@ async function main() {
             const barrierId = crypto.randomUUID();
 
             await insertBarrierRaw(
-                barrierId,
-                `${t.label} Segnalato`,
-                `Barriera generata automaticamente per test di carico.`,
-                `${city}, Italia`,
+                barrierId, `${t.label} Segnalato`, `Barriera generata automaticamente per testare la mappa.`, `${city}, Italia`,
                 diff, lat, lng, state, u, t.id
             );
 
-            // Se la barriera nasce in stato IN_REVIEW, creiamo un Report per giustificarlo!
             if (state === 'IN_REVIEW') {
                 await prisma.report.create({
-                    data: {reason: 'DOES_NOT_EXIST', status: 'PENDING', userId: u, barrierId: barrierId}
+                    data: {
+                        reason: 'DOES_NOT_EXIST',
+                        status: 'PENDING',
+                        userId: u,
+                        barrierId: barrierId
+                    }
                 });
             }
         }
     };
 
-    // 100 barriere a Milano
-    await generateBarriers(100, 45.4300, 45.5000, 9.1200, 9.2400, "Milano");
-    // 10 barriere ad Antegnate
-    await generateBarriers(10, 45.4750, 45.4900, 9.7700, 9.7950, "Antegnate");
+    await generateBarriers(100, 45.43, 45.5, 9.12, 9.24, "Milano");
+    await generateBarriers(10, 45.475, 45.49, 9.77, 9.795, "Antegnate");
 
-    // 7. INTERAZIONI MOCK SULLE BARRIERE MANUALI
     console.log('💬 Aggiunta recensioni e segnalazioni extra...');
     await prisma.feedback.create({
         data: {
