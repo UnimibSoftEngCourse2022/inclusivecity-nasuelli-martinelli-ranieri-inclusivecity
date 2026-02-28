@@ -60,7 +60,7 @@ export default function ProfilePage() {
                         onClick={() => navigate("/app/mybarriers")}
                         className="text-primary font-medium hover:underline text-left"
                     >
-                        Mostra barriere segnalate da me
+                        Mostra le mie barriere 
                     </button>
 
                     <button
