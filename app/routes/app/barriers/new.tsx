@@ -21,47 +21,55 @@ export default function NewBarrier() {
     const [selectedPhotos, setSelectedPhotos] = useState(0);
     const [showSuccess, setShowSuccess] = useState(false);
 
+    // Carica categorie
     useEffect(() => {
         async function loadTypes() {
-            const { data, error } = await supabase.from("BarrierType").select("*");
-            console.log("TYPES:", data, error);
-            if (!error && data) setTypes(data);
+            const { data } = await supabase.from("BarrierType").select("*");
+            if (data) setTypes(data);
         }
         loadTypes();
     }, []);
 
+    // Inizializza mappa + geolocalizzazione + click marker
     useEffect(() => {
         if (map.current || !mapContainer.current) return;
 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
             style: "mapbox://styles/mapbox/streets-v11",
-            center: [9.19, 45.46],
+            center: [9.19, 45.46], // fallback
             zoom: 12,
         });
 
-        map.current.on(
-            "click",
-            (e: mapboxgl.MapMouseEvent & mapboxgl.EventData) => {
-                const { lng, lat } = e.lngLat;
-
-                setCoords({ lat, lng });
-
-                if (marker) {
-                    marker.setLngLat([lng, lat]);
-                } else {
-                    if (!map.current) return;
-                    const newMarker = new mapboxgl.Marker()
-                        .setLngLat([lng, lat])
-                        .addTo(map.current);
-                    setMarker(newMarker);
-                }
-            }
+        // Geolocalizzazione reale
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                map.current?.flyTo({ center: [longitude, latitude], zoom: 14 });
+            },
+            () => console.warn("Geolocalizzazione non consentita")
         );
+
+        // Click manuale per piazzare marker
+        map.current.on("click", (e) => {
+            const { lng, lat } = e.lngLat;
+            setCoords({ lat, lng });
+
+            if (marker) {
+                marker.setLngLat([lng, lat]);
+            } else {
+                const newMarker = new mapboxgl.Marker()
+                    .setLngLat([lng, lat])
+                    .addTo(map.current!);
+                setMarker(newMarker);
+            }
+        });
     }, [marker]);
 
+    // Ricerca indirizzo
     async function searchAddress(query: string) {
         if (!query.trim()) return;
+
         const res = await fetch(
             `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
                 query
@@ -73,10 +81,7 @@ export default function NewBarrier() {
 
         const [lng, lat] = data.features[0].center;
 
-        if (!map.current) return;
-
-        map.current.flyTo({ center: [lng, lat], zoom: 16 });
-
+        map.current?.flyTo({ center: [lng, lat], zoom: 16 });
         setCoords({ lat, lng });
 
         if (marker) {
@@ -84,11 +89,12 @@ export default function NewBarrier() {
         } else {
             const newMarker = new mapboxgl.Marker()
                 .setLngLat([lng, lat])
-                .addTo(map.current);
+                .addTo(map.current!);
             setMarker(newMarker);
         }
     }
 
+    // Submit
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
@@ -106,13 +112,12 @@ export default function NewBarrier() {
         const user = userData?.user;
         if (!user) return;
 
+        // Upload foto
         const photoUrls: string[] = [];
-
         for (const file of photos) {
             if (file.size === 0) continue;
 
             const fileName = `${user.id}-${Date.now()}-${file.name}`;
-
             const { error: uploadError } = await supabase.storage
                 .from("barrier-photos")
                 .upload(fileName, file);
@@ -125,7 +130,8 @@ export default function NewBarrier() {
 
             photoUrls.push(publicUrl);
         }
-
+        
+        // salva barriera
         await supabase.from("Barrier").insert({
             title,
             description,
@@ -151,7 +157,7 @@ export default function NewBarrier() {
                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded text-sm flex flex-col gap-2">
                     <span>
                         La tua barriera è stata salvata correttamente, visualizza l&apos;elenco in
-                        {" "}“Mostra le mie barriere”.
+                        “Mostra le mie barriere”.
                     </span>
                     <button
                         type="button"
@@ -164,19 +170,6 @@ export default function NewBarrier() {
             )}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
-                {/* BARRA DI RICERCA INDIRIZZO */}
-                <input
-                    type="text"
-                    placeholder="Cerca indirizzo..."
-                    className="border p-2 rounded"
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                            e.preventDefault();
-                            searchAddress(e.currentTarget.value);
-                        }
-                    }}
-                />
 
                 {/* TITOLO */}
                 <input
@@ -257,7 +250,7 @@ export default function NewBarrier() {
                     </p>
                 </div>
 
-                {/* VALIDAZIONE POSIZIONE (input invisibile per popup browser) */}
+                {/* VALIDAZIONE POSIZIONE */}
                 <input
                     type="text"
                     tabIndex={-1}
@@ -275,11 +268,26 @@ export default function NewBarrier() {
                     required
                 />
 
-                {/* MAPPA */}
-                <div
-                    ref={mapContainer}
-                    className="w-full h-72 rounded border"
-                />
+                {/* MAPPA + BARRA DI RICERCA */}
+                <div className="relative w-full h-72 rounded border">
+
+                    <input
+                        type="text"
+                        placeholder="Cerca indirizzo..."
+                        className="absolute top-2 left-1/2 -translate-x-1/2 w-[80%] z-20 bg-white border p-2 rounded shadow"
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                searchAddress(e.currentTarget.value);
+                            }
+                        }}
+                    />
+
+                    <div
+                        ref={mapContainer}
+                        className="w-full h-full rounded"
+                    />
+                </div>
 
                 {/* SUBMIT */}
                 <button
