@@ -12,8 +12,8 @@ export function useMapFetcher(initialBaseDifficulty: number, userId?: string) {
     const realBaseDifficulty = fetcher.data?.userBaseDifficulty ?? initialBaseDifficulty;
 
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [activeFilters, setActiveFilters] = useState({ maxDifficulty: initialBaseDifficulty });
-    const [draftFilters, setDraftFilters] = useState({ maxDifficulty: initialBaseDifficulty });
+    const [activeFilters, setActiveFilters] = useState({ minDifficulty: initialBaseDifficulty });
+    const [draftFilters, setDraftFilters] = useState({ minDifficulty: initialBaseDifficulty });
 
     // SINCRONIZZAZIONE INTELLIGENTE:
     // Se arriva un nuovo dato dal DB e l'utente non ha personalizzato i filtri, aggiorniamo gli stati.
@@ -21,8 +21,8 @@ export function useMapFetcher(initialBaseDifficulty: number, userId?: string) {
     useEffect(() => {
         if (!hasCustomized && fetcher.data?.userBaseDifficulty !== undefined) {
             const fetchedBase = fetcher.data.userBaseDifficulty;
-            setActiveFilters(prev => prev.maxDifficulty === fetchedBase ? prev : { maxDifficulty: fetchedBase });
-            setDraftFilters(prev => prev.maxDifficulty === fetchedBase ? prev : { maxDifficulty: fetchedBase });
+            setActiveFilters(prev => prev.minDifficulty === fetchedBase ? prev : { minDifficulty: fetchedBase });
+            setDraftFilters(prev => prev.minDifficulty === fetchedBase ? prev : { minDifficulty: fetchedBase });
         }
     }, [fetcher.data?.userBaseDifficulty, hasCustomized]);
 
@@ -39,7 +39,7 @@ export function useMapFetcher(initialBaseDifficulty: number, userId?: string) {
 
         // Applica il filtro manuale SOLO se l'utente lo ha esplicitamente richiesto
         if (isCustom) {
-            params.append("maxDifficulty", filtersToUse.maxDifficulty.toString());
+            params.append("minDifficulty", filtersToUse.minDifficulty.toString());
         }
 
         if (userId) {
@@ -58,7 +58,7 @@ export function useMapFetcher(initialBaseDifficulty: number, userId?: string) {
 
     const resetFilters = (bounds: any) => {
         setHasCustomized(false);
-        const defaultFilters = { maxDifficulty: realBaseDifficulty };
+        const defaultFilters = { minDifficulty: realBaseDifficulty };
         setDraftFilters(defaultFilters);
         setActiveFilters(defaultFilters);
         setIsFilterOpen(false);
@@ -73,7 +73,7 @@ export function useMapFetcher(initialBaseDifficulty: number, userId?: string) {
     const closeFilterMenu = () => setIsFilterOpen(false);
 
     // Mostra l'indicatore solo se il filtro attivo discosta dal VERO livello di mobilità
-    const hasActiveCustomFilters = hasCustomized && activeFilters.maxDifficulty !== realBaseDifficulty;
+    const hasActiveCustomFilters = hasCustomized && activeFilters.minDifficulty !== realBaseDifficulty;
 
     return {
         fetcher,

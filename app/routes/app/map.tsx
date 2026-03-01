@@ -18,7 +18,7 @@ export async function loader({request}: LoaderFunctionArgs) {
     const maxLng = url.searchParams.get("maxLng");
     const maxLat = url.searchParams.get("maxLat");
     const userId = url.searchParams.get("userId");
-    const maxDiffParam = url.searchParams.get("maxDifficulty");
+    const minDiffParam = url.searchParams.get("maxDifficulty");
 
     let barriers: BarrierMapData[] = [];
     let userBaseDifficulty = 100;
@@ -33,9 +33,9 @@ export async function loader({request}: LoaderFunctionArgs) {
         }
     }
 
-    let appliedMaxDifficulty = userBaseDifficulty;
-    if (maxDiffParam !== null && !Number.isNaN(Number.parseInt(maxDiffParam))) {
-        appliedMaxDifficulty = Number.parseInt(maxDiffParam, 10);
+    let appliedMinDifficulty = userBaseDifficulty;
+    if (minDiffParam !== null && !Number.isNaN(Number.parseInt(minDiffParam))) {
+        appliedMinDifficulty = Number.parseInt(minDiffParam, 10);
     }
 
     if (minLng && minLat && maxLng && maxLat) {
@@ -53,7 +53,7 @@ export async function loader({request}: LoaderFunctionArgs) {
             FROM "Barrier" b
                      JOIN "BarrierType" bt ON b."typeId" = bt.id
             WHERE (b.state = 'ACTIVE' OR b.state = 'IN_REVIEW')
-              AND b.difficulty <= ${appliedMaxDifficulty}
+              AND b.difficulty >= ${appliedMinDifficulty}
               AND ST_Intersects(b.location::geometry,
                                 ST_MakeEnvelope(${Number.parseFloat(minLng)}, ${Number.parseFloat(minLat)},
                                                 ${Number.parseFloat(maxLng)}, ${Number.parseFloat(maxLat)}, 4326))
@@ -61,7 +61,7 @@ export async function loader({request}: LoaderFunctionArgs) {
         `;
     }
 
-    return {barriers, mapboxToken: process.env.VITE_MAPBOX_TOKEN, appliedMaxDifficulty, userBaseDifficulty};
+    return {barriers, mapboxToken: process.env.VITE_MAPBOX_TOKEN, appliedMinDifficulty, userBaseDifficulty};
 }
 
 export default function MapPage() {
@@ -194,7 +194,7 @@ export default function MapPage() {
                         <h2 className="text-lg font-bold text-text">Filtri Mappa</h2>
                         <div className="flex items-center gap-3">
 
-                            {(draftFilters.maxDifficulty !== userBaseDifficulty || hasActiveCustomFilters) && (
+                            {(draftFilters.minDifficulty !== userBaseDifficulty || hasActiveCustomFilters) && (
                                 <button onClick={handleResetFilters}
                                         className="flex items-center gap-1.5 text-sm text-primary font-semibold bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 active:scale-95 transition">
                                     <RotateCcw className="w-4 h-4"/>
@@ -213,25 +213,25 @@ export default function MapPage() {
                     <div className="p-6 flex-1 overflow-y-auto space-y-8">
                         <div className="space-y-4">
                             <label className="flex justify-between items-center font-semibold text-text">
-                                <span>Difficoltà Massima</span>
+                                <span>Difficoltà Minima</span>
                                 <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-sm font-bold">
-                                    Lvl {draftFilters.maxDifficulty}
+                                    Lvl {draftFilters.minDifficulty}
                                 </span>
                             </label>
 
                             <input
                                 type="range" min="0" max="100" step="10"
-                                value={draftFilters.maxDifficulty}
+                                value={draftFilters.minDifficulty}
                                 onChange={(e) => setDraftFilters(prev => ({
                                     ...prev,
-                                    maxDifficulty: Number.parseInt(e.target.value)
+                                    minDifficulty: Number.parseInt(e.target.value)
                                 }))}
                                 className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
                             />
 
                             <div className="flex flex-col gap-1.5 mt-2">
                                 <p className="text-xs text-text-muted leading-relaxed">
-                                    Verranno mostrate le barriere con livello di difficoltà uguale o inferiore a quello
+                                    Verranno mostrate le barriere con livello di difficoltà uguale o superiore a quello
                                     selezionato (che puoi superare).
                                 </p>
                                 <p className="text-xs font-medium text-primary">
