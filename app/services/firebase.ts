@@ -28,17 +28,22 @@ if (typeof window !== "undefined") {
 
 export async function requestNotificationPermission(): Promise<string | null> {
     try {
-        if (typeof window === "undefined") return null;
+        if (globalThis.window === undefined) return null;
+
+        if (Notification.permission === 'default') {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                console.log("L'utente ha negato i permessi per le notifiche.");
+                return null;
+            }
+        } else if (Notification.permission === 'denied') {
+            console.log("Permessi bloccati nelle impostazioni.");
+            return null;
+        }
 
         const supported = await isMessagingSupported();
         if (!supported) {
             console.warn("Firebase Messaging non è supportato in questo browser.");
-            return null;
-        }
-
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-            console.log("L'utente ha negato i permessi per le notifiche.");
             return null;
         }
 
