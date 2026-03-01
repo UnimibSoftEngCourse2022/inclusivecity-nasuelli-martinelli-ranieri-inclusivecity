@@ -1,56 +1,42 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
-import { supabase } from "~/services/supabase/supabase"; {/* client supabase */}
+import { supabase } from "~/services/supabase/supabase";
 import { useNavigate } from "react-router";
 
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN; {/* token mapbox */}
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function NewBarrier() {
+    const navigate = useNavigate();
 
-    const navigate = useNavigate(); {/* redirect */}
-
-    {/* riferimenti per mappa */}
     const mapContainer = useRef<HTMLDivElement | null>(null);
     const map = useRef<mapboxgl.Map | null>(null);
 
-    {/* marker */}
     const [marker, setMarker] = useState<mapboxgl.Marker | null>(null);
-
-    {/* coordinate */}
     const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({
         lat: null,
         lng: null,
     });
 
-    {/* categorie */}
     const [types, setTypes] = useState<any[]>([]);
-
-    {/* foto selezionate */}
     const [selectedPhotos, setSelectedPhotos] = useState(0);
+    const [showSuccess, setShowSuccess] = useState(false);
 
-    {/* errori */}
-    const [error, setError] = useState<string | null>(null);
-
-    {/* ---------------- CARICA CATEGORIE ---------------- */}
     useEffect(() => {
         async function loadTypes() {
             const { data, error } = await supabase.from("BarrierType").select("*");
-
-            console.log("TYPES:", data, error); {/* debug */}
-
+            console.log("TYPES:", data, error);
             if (!error && data) setTypes(data);
         }
         loadTypes();
     }, []);
 
-    {/* ---------------- INIZIALIZZA MAPPA ---------------- */}
     useEffect(() => {
         if (map.current || !mapContainer.current) return;
 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
             style: "mapbox://styles/mapbox/streets-v11",
-            center: [9.19, 45.46], 
+            center: [9.19, 45.46],
             zoom: 12,
         });
 
@@ -74,10 +60,37 @@ export default function NewBarrier() {
         );
     }, [marker]);
 
-    {/* ---------------- SUBMIT FORM ---------------- */}
+    async function searchAddress(query: string) {
+        if (!query.trim()) return;
+        const res = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+                query
+            )}.json?access_token=${mapboxgl.accessToken}`
+        );
+
+        const data = await res.json();
+        if (!data.features || data.features.length === 0) return;
+
+        const [lng, lat] = data.features[0].center;
+
+        if (!map.current) return;
+
+        map.current.flyTo({ center: [lng, lat], zoom: 16 });
+
+        setCoords({ lat, lng });
+
+        if (marker) {
+            marker.setLngLat([lng, lat]);
+        } else {
+            const newMarker = new mapboxgl.Marker()
+                .setLngLat([lng, lat])
+                .addTo(map.current);
+            setMarker(newMarker);
+        }
+    }
+
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        setError(null);
 
         const form = e.currentTarget;
         const formData = new FormData(form);
@@ -89,28 +102,10 @@ export default function NewBarrier() {
         const typeId = formData.get("typeId") as string;
         const photos = formData.getAll("photos") as File[];
 
-        {/* controllo posizione */}
-        if (!coords.lat || !coords.lng) {
-            setError("Seleziona una posizione sulla mappa.");
-            return;
-        }
-
-        {/* controllo foto */}
-        if (photos.length === 0 || photos[0].size === 0) {
-            setError("È obbligatorio aggiungere la foto della barriera.");
-            return;
-        }
-
-        {/* utente loggato */}
         const { data: userData } = await supabase.auth.getUser();
         const user = userData?.user;
+        if (!user) return;
 
-        if (!user) {
-            setError("Devi essere loggato per creare una barriera.");
-            return;
-        }
-
-        {/* ---------------- UPLOAD FOTO ---------------- */}
         const photoUrls: string[] = [];
 
         for (const file of photos) {
@@ -122,10 +117,7 @@ export default function NewBarrier() {
                 .from("barrier-photos")
                 .upload(fileName, file);
 
-            if (uploadError) {
-                setError("Errore durante l'upload delle immagini.");
-                return;
-            }
+            if (uploadError) return;
 
             const publicUrl = supabase.storage
                 .from("barrier-photos")
@@ -134,8 +126,7 @@ export default function NewBarrier() {
             photoUrls.push(publicUrl);
         }
 
-        {/* ---------------- CREA BARRIERA ---------------- */}
-        const { error: insertError } = await supabase.from("Barrier").insert({
+        await supabase.from("Barrier").insert({
             title,
             description,
             address,
@@ -149,22 +140,43 @@ export default function NewBarrier() {
             totalRatings: 0,
         });
 
-        if (insertError) {
-            setError("Errore durante la creazione della barriera.");
-            return;
-        }
-
-        navigate("/app/mybarriers"); {/* redirect */}
+        setShowSuccess(true);
     }
 
-    {/* ---------------- RENDER ---------------- */}
     return (
         <div className="p-6 flex flex-col gap-6">
             <h1 className="text-2xl font-bold">Segnala una nuova barriera</h1>
 
-            {error && <p className="text-red-600">{error}</p>}
+            {showSuccess && (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded text-sm flex flex-col gap-2">
+                    <span>
+                        La tua barriera è stata salvata correttamente, visualizza l&apos;elenco in
+                        {" "}“Mostra le mie barriere”.
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => navigate("/app/mybarriers")}
+                        className="self-start text-primary underline font-medium"
+                    >
+                        Mostra le mie barriere
+                    </button>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+                {/* BARRA DI RICERCA INDIRIZZO */}
+                <input
+                    type="text"
+                    placeholder="Cerca indirizzo..."
+                    className="border p-2 rounded"
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            searchAddress(e.currentTarget.value);
+                        }
+                    }}
+                />
 
                 {/* TITOLO */}
                 <input
@@ -193,22 +205,25 @@ export default function NewBarrier() {
                 />
 
                 {/* DIFFICOLTÀ */}
-                <input
-                    type="number"
+                <select
                     name="difficulty"
-                    min="1"
-                    max="5"
-                    placeholder="Difficoltà (1-5)"
                     required
-                    className="border p-2 rounded"
-                />
+                    className="border p-2 rounded text-black"
+                >
+                    <option value="">Seleziona difficoltà</option>
+                    <option value="1">1 - Molto facile</option>
+                    <option value="2">2 - Facile</option>
+                    <option value="3">3 - Media</option>
+                    <option value="4">4 - Difficile</option>
+                    <option value="5">5 - Molto difficile</option>
+                </select>
 
                 {/* CATEGORIA */}
-                <select name="typeId" required className="border p-2 rounded">
+                <select name="typeId" required className="border p-2 rounded text-black">
                     <option value="">Seleziona categoria</option>
                     {types.map((t) => (
-                        <option key={t.typeId} value={t.typeId}>
-                            {t.text}
+                        <option key={t.id} value={t.id}>
+                            {t.label}
                         </option>
                     ))}
                 </select>
@@ -225,6 +240,7 @@ export default function NewBarrier() {
                         multiple
                         className="hidden"
                         onChange={(e) => setSelectedPhotos(e.target.files?.length || 0)}
+                        required
                     />
 
                     <label
@@ -240,6 +256,24 @@ export default function NewBarrier() {
                             : `${selectedPhotos} foto selezionate`}
                     </p>
                 </div>
+
+                {/* VALIDAZIONE POSIZIONE (input invisibile per popup browser) */}
+                <input
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    style={{
+                        opacity: 0,
+                        height: 0,
+                        padding: 0,
+                        margin: 0,
+                        border: "none",
+                        position: "absolute",
+                    }}
+                    value={coords.lat && coords.lng ? "ok" : ""}
+                    onChange={() => {}}
+                    required
+                />
 
                 {/* MAPPA */}
                 <div
