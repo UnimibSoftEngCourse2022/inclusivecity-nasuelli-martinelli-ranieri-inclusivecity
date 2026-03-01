@@ -147,6 +147,14 @@ export default function NewBarrier() {
         });
 
         setShowSuccess(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        form.reset(); 
+        setSelectedPhotos(0); 
+        setCoords({ lat: null, lng: null }); 
+        if (marker) { 
+            marker.remove(); 
+            setMarker(null);
+        }    
     }
 
     return (
