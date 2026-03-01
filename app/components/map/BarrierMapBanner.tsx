@@ -17,10 +17,10 @@ export default function BarrierMapBanner({barrier, onClose}: Readonly<Props>) {
         <Popup
             longitude={barrier.lng}
             latitude={barrier.lat}
-            anchor="bottom"
+            offset={30}
             onClose={onClose}
             closeOnClick={true}
-            closeOnMove={true}
+            closeOnMove={false}
             closeButton={false}
             className="z-20"
             maxWidth="280px"

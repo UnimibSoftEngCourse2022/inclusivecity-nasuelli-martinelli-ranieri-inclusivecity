@@ -14,6 +14,9 @@ const envSchema = z.object({
     // Mapbox
     VITE_MAPBOX_TOKEN: z.string(),
 
+    // Ors
+    VITE_ORS_API_KEY: z.string(),
+
     // Supabase
     VITE_SUPABASE_URL: z.url(),
     VITE_SUPABASE_ANON_KEY: z.string(),
