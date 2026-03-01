@@ -196,15 +196,6 @@ export default function NewBarrier() {
                     className="border p-2 rounded"
                 />
 
-                {/* INDIRIZZO */}
-                <input
-                    type="text"
-                    name="address"
-                    placeholder="Indirizzo"
-                    required
-                    className="border p-2 rounded"
-                />
-
                 {/* DIFFICOLTÀ */}
                 <select
                     name="difficulty"
@@ -257,24 +248,6 @@ export default function NewBarrier() {
                             : `${selectedPhotos} foto selezionate`}
                     </p>
                 </div>
-
-                {/* VALIDAZIONE POSIZIONE */}
-                <input
-                    type="text"
-                    tabIndex={-1}
-                    autoComplete="off"
-                    style={{
-                        opacity: 0,
-                        height: 0,
-                        padding: 0,
-                        margin: 0,
-                        border: "none",
-                        position: "absolute",
-                    }}
-                    value={coords.lat && coords.lng ? "ok" : ""}
-                    onChange={() => {}}
-                    required
-                />
 
                 {/* MAPPA + BARRA DI RICERCA */}
                 <div className="relative w-full h-72 rounded border">
