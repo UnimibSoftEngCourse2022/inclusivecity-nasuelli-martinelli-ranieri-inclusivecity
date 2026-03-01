@@ -18,7 +18,7 @@ export async function loader({request}: LoaderFunctionArgs) {
     const maxLng = url.searchParams.get("maxLng");
     const maxLat = url.searchParams.get("maxLat");
     const userId = url.searchParams.get("userId");
-    const minDiffParam = url.searchParams.get("maxDifficulty");
+    const minDiffParam = url.searchParams.get("minDifficulty");
 
     let barriers: BarrierMapData[] = [];
     let userBaseDifficulty = 100;
