@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import {Link, type LoaderFunctionArgs, useLoaderData} from "react-router";
 import Map, {GeolocateControl, NavigationControl} from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import {Filter, Plus, RotateCcw, Search, X} from "lucide-react";
+import {Filter, Plus, RotateCcw, X} from "lucide-react";
 import {prisma} from "~/db.server";
 import BarrierMapBanner from "~/components/map/BarrierMapBanner";
 import Loading from "~/components/Loading";
@@ -10,6 +10,8 @@ import type {BarrierMapData} from "~/types/barrier";
 import {useAuth} from "~/context/AuthContext";
 import BarrierMarker from "~/components/map/BarrierMarker";
 import {useMapFetcher} from "~/hooks/useMapFetcher";
+import SearchBar from "~/components/map/SearchBar";
+import {envSchema} from "~/utils/envSchema";
 
 export async function loader({request}: LoaderFunctionArgs) {
     const url = new URL(request.url);
@@ -61,7 +63,9 @@ export async function loader({request}: LoaderFunctionArgs) {
         `;
     }
 
-    return {barriers, mapboxToken: process.env.VITE_MAPBOX_TOKEN, appliedMinDifficulty, userBaseDifficulty};
+    const env = envSchema.parse(process.env);
+
+    return {barriers, mapboxToken: env.VITE_MAPBOX_TOKEN, appliedMinDifficulty, userBaseDifficulty};
 }
 
 export default function MapPage() {
@@ -116,6 +120,16 @@ export default function MapPage() {
     const handleMoveEnd = () => fetchMapData(mapRef.current?.getMap().getBounds());
     const handleApplyFilters = () => applyFilters(mapRef.current?.getMap().getBounds());
     const handleResetFilters = () => resetFilters(mapRef.current?.getMap().getBounds());
+    const handleLocationSelect = (lng: number, lat: number) => {
+        if (mapRef.current) {
+            mapRef.current.flyTo({
+                center: [lng, lat],
+                zoom: 16,
+                duration: 2000,
+                essential: true
+            });
+        }
+    };
 
     const onMapLoad = () => {
         geoControlRef.current?.trigger();
@@ -128,24 +142,18 @@ export default function MapPage() {
         <div className="relative w-full h-full bg-surface overflow-hidden">
 
             <div className="absolute top-4 left-4 right-4 z-10 flex gap-2 pointer-events-none">
-                {/* SEARCH BAR */}
-                <div
-                    className="flex-1 bg-surface border border-border shadow-md rounded-full px-4 py-3 flex items-center gap-3 pointer-events-auto relative">
-                    <Search className="w-5 h-5 text-text-muted"/>
-                    <input type="text" placeholder="Cerca un indirizzo o un luogo..."
-                           className="bg-transparent border-none outline-none w-full text-text placeholder-text-muted text-base"/>
-                    {fetcher.state === "loading" && (
-                        <span className="absolute right-4 flex h-3 w-3">
-                            <span
-                                className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                        </span>
-                    )}
-                </div>
 
-                { /* FILTERS BUTTON */}
+                {/* LA NOSTRA NUOVA SEARCH BAR */}
+                <SearchBar
+                    mapboxToken={mapboxToken}
+                    onSelect={handleLocationSelect}
+                    isMapLoading={fetcher.state === "loading"}
+                />
+
+                { /* PULSANTE FILTRI (Invariato) */}
                 <button onClick={openFilterMenu}
-                        className="relative bg-surface border border-border shadow-md rounded-full p-3 flex items-center justify-center text-text pointer-events-auto">
+                        className="relative bg-surface border border-border shadow-md rounded-full p-3 flex items-center justify-center text-text pointer-events-auto active:scale-95 transition-transform touch-manipulation select-none"
+                        style={{WebkitTapHighlightColor: "transparent"}}>
                     <Filter className="w-6 h-6"/>
                     {hasActiveCustomFilters && <span
                         className="absolute top-2 right-2 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface shadow-sm"></span>}
