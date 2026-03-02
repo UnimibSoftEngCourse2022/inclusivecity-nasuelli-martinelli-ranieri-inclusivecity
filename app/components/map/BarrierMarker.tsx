@@ -1,6 +1,6 @@
 import {Marker} from "react-map-gl";
-import * as LucideIcons from "lucide-react";
 import type {BarrierMapData} from "~/types/barrier";
+import {getDynamicIcon} from "~/utils/icons";
 
 type Props = {
     barrier: BarrierMapData;
@@ -13,7 +13,7 @@ export default function BarrierMarker({barrier, onClick}: Readonly<Props>) {
     const iconName = barrier.iconKey || (barrier as any).iconkey;
     const color = barrier.colorHex || (barrier as any).colorhex || "#EF4444";
 
-    const IconComponent = (LucideIcons as any)[iconName] || LucideIcons.MapPin;
+    const IconComponent = getDynamicIcon(iconName);
 
     return (
         <Marker
