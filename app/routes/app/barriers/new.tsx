@@ -10,8 +10,9 @@ export default function NewBarrier() {
 
     const mapContainer = useRef<HTMLDivElement | null>(null);
     const map = useRef<mapboxgl.Map | null>(null);
+    const markerRef = useRef<mapboxgl.Marker | null>(null);
+    const clickHandlerRef = useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
 
-    const [marker, setMarker] = useState<mapboxgl.Marker | null>(null);
     const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({
         lat: null,
         lng: null,
@@ -20,6 +21,9 @@ export default function NewBarrier() {
     const [types, setTypes] = useState<any[]>([]);
     const [selectedPhotos, setSelectedPhotos] = useState(0);
     const [showSuccess, setShowSuccess] = useState(false);
+
+    const [query, setQuery] = useState("");
+    const [suggestions, setSuggestions] = useState<any[]>([]);
 
     // Carica categorie
     useEffect(() => {
@@ -32,78 +36,93 @@ export default function NewBarrier() {
 
     // Inizializza mappa + geolocalizzazione + click marker
     useEffect(() => {
-        if (map.current || !mapContainer.current) return;
+        if (!map.current && mapContainer.current) {
+            map.current = new mapboxgl.Map({
+                container: mapContainer.current,
+                style: "mapbox://styles/mapbox/streets-v11",
+                center: [9.19, 45.46],
+                zoom: 12,
+            });
 
-        map.current = new mapboxgl.Map({
-            container: mapContainer.current,
-            style: "mapbox://styles/mapbox/streets-v11",
-            center: [9.19, 45.46], // fallback
-            zoom: 12,
-        });
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    map.current?.flyTo({ center: [longitude, latitude], zoom: 14 });
+                },
+                () => console.warn("Geolocalizzazione non consentita")
+            );
+        }
 
-        // Geolocalizzazione reale
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const { latitude, longitude } = pos.coords;
-                map.current?.flyTo({ center: [longitude, latitude], zoom: 14 });
-            },
-            () => console.warn("Geolocalizzazione non consentita")
-        );
+        if (!map.current) return;
 
-        // Click manuale per piazzare marker
-        map.current.on("click", (e) => {
+        // Rimuovi eventuale listener precedente
+        if (clickHandlerRef.current) {
+            map.current.off("click", clickHandlerRef.current);
+        }
+
+        // Definisci nuovo listener
+        const handleClick = (e: mapboxgl.MapMouseEvent) => {
             const { lng, lat } = e.lngLat;
             setCoords({ lat, lng });
 
-            if (marker) {
-                marker.setLngLat([lng, lat]);
+            if (markerRef.current) {
+                markerRef.current.setLngLat([lng, lat]);
             } else {
-                const newMarker = new mapboxgl.Marker()
+                markerRef.current = new mapboxgl.Marker()
                     .setLngLat([lng, lat])
                     .addTo(map.current!);
-                setMarker(newMarker);
             }
-        });
-    }, [marker]);
+        };
 
-    // Ricerca indirizzo
-    async function searchAddress(query: string) {
-        if (!query.trim()) return;
+        clickHandlerRef.current = handleClick;
+
+        // Registra listener
+        map.current.on("click", handleClick);
+    }, []);
+
+    // Ricerca indirizzo (autocomplete)
+    async function fetchSuggestions(text: string) {
+        if (text.length < 3) {
+            setSuggestions([]);
+            return;
+        }
 
         const res = await fetch(
             `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-                query
-            )}.json?access_token=${mapboxgl.accessToken}`
+                text
+            )}.json?autocomplete=true&limit=5&language=it&access_token=${mapboxgl.accessToken}`
         );
 
         const data = await res.json();
-        if (!data.features || data.features.length === 0) return;
+        setSuggestions(data.features || []);
+    }
 
-        const [lng, lat] = data.features[0].center;
+    function goToLocation(feature: any) {
+        const [lng, lat] = feature.center;
 
-        map.current?.flyTo({ center: [lng, lat], zoom: 16 });
-        setCoords({ lat, lng });
+        map.current?.flyTo({
+            center: [lng, lat],
+            zoom: 16,
+        });
 
-        if (marker) {
-            marker.setLngLat([lng, lat]);
-        } else {
-            const newMarker = new mapboxgl.Marker()
-                .setLngLat([lng, lat])
-                .addTo(map.current!);
-            setMarker(newMarker);
-        }
+        setQuery(feature.place_name);
+        setSuggestions([]);
     }
 
     // Submit
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
+        if (!coords.lat || !coords.lng) {
+            alert("Per favore seleziona la posizione sulla mappa.");
+            return;
+        }
+
         const form = e.currentTarget;
         const formData = new FormData(form);
 
         const title = formData.get("title") as string;
         const description = formData.get("description") as string;
-        const address = formData.get("address") as string;
         const difficulty = Number(formData.get("difficulty"));
         const typeId = formData.get("typeId") as string;
         const photos = formData.getAll("photos") as File[];
@@ -130,12 +149,11 @@ export default function NewBarrier() {
 
             photoUrls.push(publicUrl);
         }
-        
+
         // salva barriera
         await supabase.from("Barrier").insert({
             title,
             description,
-            address,
             difficulty,
             typeId,
             userId: user.id,
@@ -148,13 +166,14 @@ export default function NewBarrier() {
 
         setShowSuccess(true);
         window.scrollTo({ top: 0, behavior: "smooth" });
-        form.reset(); 
-        setSelectedPhotos(0); 
-        setCoords({ lat: null, lng: null }); 
-        if (marker) { 
-            marker.remove(); 
-            setMarker(null);
-        }    
+        form.reset();
+        setSelectedPhotos(0);
+        setCoords({ lat: null, lng: null });
+
+        if (markerRef.current) {
+            markerRef.current.remove();
+            markerRef.current = null;
+        }
     }
 
     return (
@@ -254,20 +273,33 @@ export default function NewBarrier() {
 
                     <input
                         type="text"
+                        value={query}
                         placeholder="Cerca indirizzo..."
                         className="absolute top-2 left-1/2 -translate-x-1/2 w-[80%] z-20 bg-white border p-2 rounded shadow"
+                        onChange={(e) => {
+                            setQuery(e.target.value);
+                            fetchSuggestions(e.target.value);
+                        }}
                         onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                                e.preventDefault();
-                                searchAddress(e.currentTarget.value);
-                            }
+                            if (e.key === "Enter") e.preventDefault();
                         }}
                     />
 
-                    <div
-                        ref={mapContainer}
-                        className="w-full h-full rounded"
-                    />
+                    {suggestions.length > 0 && (
+                        <div className="absolute top-14 left-1/2 -translate-x-1/2 w-[80%] bg-white border rounded shadow z-30">
+                            {suggestions.map((s) => (
+                                <div
+                                    key={s.id}
+                                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                                    onClick={() => goToLocation(s)}
+                                >
+                                    {s.place_name}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div ref={mapContainer} className="w-full h-full rounded" />
                 </div>
 
                 {/* SUBMIT */}
