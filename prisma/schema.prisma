@@ -1,6 +1,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"] // Abilita gestione estensioni
+  binaryTargets   = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
