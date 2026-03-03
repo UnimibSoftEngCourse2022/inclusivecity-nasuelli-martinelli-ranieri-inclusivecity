@@ -29,9 +29,8 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
-                {/* --- COLLEGAMENTO ALLA PAGINA DI MODIFICA --- */}
                 <Link
-                    to="/app/profilesettings"
+                    to="/app/profile/edit"
                     className="inline-block mt-2 text-primary font-medium hover:underline"
                 >
                     Modifica profilo
@@ -51,23 +50,16 @@ export default function ProfilePage() {
                 </section>
             )}
 
-            {/* --- LE MIE BARRIERE --- */}
+            {/* --- BARRIERE --- */}
             <section className="bg-surface rounded-xl border border-border p-4 shadow-sm space-y-3 mt-6">
                 <h2 className="text-lg font-semibold text-text">Barriere</h2>
 
                 <div className="flex flex-col space-y-3">
                     <button
-                        onClick={() => navigate("/app/mybarriers")}
-                        className="text-primary font-medium hover:underline text-left"
-                    >
-                        Mostra le mie barriere 
-                    </button>
-
-                    <button
                         onClick={() => navigate("/app/barriers")}
                         className="text-primary font-medium hover:underline text-left"
                     >
-                        Mostra tutte le barriere
+                        Vai a elenco barriere
                     </button>
                 </div>
             </section>
@@ -79,7 +71,7 @@ export default function ProfilePage() {
                     className="w-full flex items-center gap-3 p-4 text-left text-error hover:bg-error/5 transition-colors"
                 >
                     <LogOut className="w-5 h-5"/>
-                    <span className="font-medium">Esci dall'account</span>
+                    <span className="font-medium">Logout</span>
                 </button>
             </section>
         </div>

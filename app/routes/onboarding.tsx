@@ -1,31 +1,15 @@
-import {useState} from "react";
+import React, {useState} from "react";
 import {Navigate, useNavigate} from "react-router";
 import {supabase} from "~/services/supabase/supabase";
 import {useAuth} from "~/context/AuthContext";
-import {Accessibility, Activity, Baby, Brain, CheckCircle2, Ear, Eye, HelpCircle, User} from "lucide-react";
 import type {Route} from "./+types/onboarding";
 import Loading from "~/components/Loading";
-
-const ICON_MAP: Record<string, React.ElementType> = {
-    Accessibility,
-    Eye,
-    Ear,
-    Brain,
-    Baby,
-    User,
-    Activity,
-    HelpCircle
-};
+import {getDynamicIcon} from "~/utils/icons";
+import {CheckCircle2} from "lucide-react";
+import {prisma} from "~/db.server";
 
 export async function loader() {
-    const {data, error} = await supabase
-        .from("Disability")
-        .select("id, name, description, mobilityLevel, iconName")
-        .order("mobilityLevel", {ascending: false});
-
-    if (error) {
-        throw new Response("Errore nel caricamento delle disabilità", {status: 500});
-    }
+    const data = await prisma.disability.findMany();
 
     return {options: data || []};
 }
@@ -48,7 +32,7 @@ export default function OnboardingPage({loaderData}: Route.ComponentProps) {
         return <Navigate to="/app/map" replace/>;
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         if (!selectedId || !user) {
             setError("Seleziona un'opzione per continuare.");
@@ -103,9 +87,7 @@ export default function OnboardingPage({loaderData}: Route.ComponentProps) {
                         {options.map((option) => {
                             const isSelected = selectedId === option.id;
 
-                            const IconComponent = (option.iconName && ICON_MAP[option.iconName])
-                                ? ICON_MAP[option.iconName]
-                                : HelpCircle;
+                            const IconComponent = getDynamicIcon(option.iconName);
 
                             return (
                                 <button
