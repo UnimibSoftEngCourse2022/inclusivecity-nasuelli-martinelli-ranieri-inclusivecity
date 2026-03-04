@@ -4,10 +4,13 @@ import {prisma} from "~/db.server";
 import {BarrierState, ReportReason, Role} from "@prisma/client";
 import {useAuth} from "~/context/AuthContext";
 import {useState} from "react";
-import {AlertTriangle, ArrowLeft, Camera, Edit, MapPin, Star, Trash2} from "lucide-react";
+import {AlertTriangle, ArrowLeft, Camera, CheckCircle, Edit, MapPin, Star, Trash2} from "lucide-react";
 import {getDynamicIcon} from "~/utils/icons";
 import StarRating from "~/components/barrier/StarRating";
 import PhotoGallery from "~/components/barrier/PhotoGallery";
+import ResolutionCard from "~/components/moderation/ResolutionCard";
+import FeedbackCard from "~/components/moderation/FeedbackCard";
+import {formatDate} from "~/utils/format";
 
 export async function loader({params}: LoaderFunctionArgs) {
     const {id} = params;
@@ -19,6 +22,10 @@ export async function loader({params}: LoaderFunctionArgs) {
             type: {select: {id: true, label: true, iconKey: true, colorHex: true}},
             creator: {select: {id: true, firstName: true, lastName: true, role: true}},
             feedbacks: {
+                orderBy: {createdAt: 'desc'},
+                include: {user: {select: {id: true, firstName: true, lastName: true}}}
+            },
+            resolutions: {
                 orderBy: {createdAt: 'desc'},
                 include: {user: {select: {id: true, firstName: true, lastName: true}}}
             }
@@ -77,12 +84,6 @@ export async function action({request, params}: ActionFunctionArgs) {
     return null;
 }
 
-function formatDate(value: string | Date) {
-    const d = typeof value === "string" ? new Date(value) : value;
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleDateString("it-IT", {year: "numeric", month: "long", day: "numeric"});
-}
-
 export default function BarrierDetailPage() {
     const {barrier} = useLoaderData<typeof loader>();
     const navigate = useNavigate();
@@ -100,6 +101,8 @@ export default function BarrierDetailPage() {
     const hasMyFeedback = barrier.feedbacks.some(f => f.userId === profile?.id);
     const showFeedbackForm = !isOwner && !hasMyFeedback;
 
+    const hasProposedResolution = profile ? barrier.resolutions.some(r => r.userId === profile.id) : false;
+
     function handleDelete() {
         if (!canEdit) return;
         const ok = globalThis.confirm("Sei sicuro di voler eliminare definitivamente questa barriera? L'azione è irreversibile.");
@@ -113,7 +116,6 @@ export default function BarrierDetailPage() {
     return (
         <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-20 animate-in fade-in duration-300">
 
-            {/* INTESTAZIONE */}
             <div className="flex items-center gap-4">
                 <button onClick={() => navigate(-1)}
                         className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm">
@@ -132,7 +134,6 @@ export default function BarrierDetailPage() {
                 <div className="p-4 bg-error/10 text-error rounded-xl text-sm font-medium">{fetcher.data.error}</div>}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* COLONNA SX */}
                 <div className="md:col-span-1 space-y-4">
                     <div className="relative w-full">
                         <PhotoGallery photos={barrier.photoUrls} altText={barrier.title}/>
@@ -152,15 +153,21 @@ export default function BarrierDetailPage() {
                             className="font-bold">{formatDate(barrier.createdAt)}</span></div>
                     </div>
 
-                    {!isResolved && (
+                    {!isResolved && !hasProposedResolution && (
                         <Link to={`/app/barriers/${barrier.id}/resolve`}
                               className="w-full flex items-center justify-center gap-2 bg-success text-white py-3.5 rounded-2xl font-bold shadow-md hover:bg-success/90 transition active:scale-95">
                             <Camera className="w-5 h-5"/> Proponi Risoluzione
                         </Link>
                     )}
+
+                    {!isResolved && hasProposedResolution && (
+                        <div
+                            className="w-full flex items-center justify-center gap-2 bg-success/10 text-success border border-success/20 py-3.5 rounded-2xl font-bold shadow-sm">
+                            <CheckCircle className="w-5 h-5"/> Risoluzione Inviata
+                        </div>
+                    )}
                 </div>
 
-                {/* COLONNA DX */}
                 <div className="md:col-span-2 space-y-6">
                     <div className="bg-surface p-6 rounded-3xl border border-border shadow-sm space-y-6">
                         <div className="flex flex-wrap gap-3">
@@ -180,9 +187,33 @@ export default function BarrierDetailPage() {
                         </div>
                     </div>
 
-                    {/* SEZIONE FEEDBACK */}
-                    <div className="bg-surface p-6 rounded-3xl border border-border shadow-sm space-y-6">
-                        <div className="flex justify-between items-center border-b border-border pb-2">
+                    {barrier.resolutions.length > 0 && (
+                        <div className="bg-surface p-6 rounded-3xl border border-border shadow-sm space-y-5">
+                            <h3 className="text-lg font-bold text-text flex items-center gap-2 border-b border-border pb-3">
+                                <Camera className="w-5 h-5 text-success"/> Prove di Risoluzione
+                            </h3>
+
+                            <div className="space-y-4">
+                                {barrier.resolutions.slice(0, 5).map(res => (
+                                    <ResolutionCard
+                                        key={res.id}
+                                        userFullName={`${res.user.firstName} ${res.user.lastName || ""}`}
+                                        status={res.status}
+                                        evidenceUrl={res.evidenceUrl}
+                                        comment={res.comment}
+                                        createdAt={res.createdAt}
+                                    />
+                                ))}
+                            </div>
+                            {barrier.resolutions.length > 5 && (
+                                <p className="text-xs text-text-muted text-center pt-2 italic">Mostrando le ultime 5
+                                    prove inserite.</p>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="bg-surface p-6 rounded-3xl border border-border shadow-sm space-y-5">
+                        <div className="flex justify-between items-center border-b border-border pb-3">
                             <h3 className="text-lg font-bold text-text flex items-center gap-2"><Star
                                 className="w-5 h-5 text-warning"/> Affidabilità</h3>
                             {barrier.totalRatings > 0 && <span
@@ -199,22 +230,16 @@ export default function BarrierDetailPage() {
                                 <div className="flex flex-col items-center sm:items-start">
                                     <label className="block text-sm font-bold text-text mb-2">
                                         Quanto è accurata questa segnalazione?
+                                        <StarRating rating={rating} onChange={setRating}
+                                                    disabled={fetcher.state !== "idle"}/>
                                     </label>
-                                    <StarRating
-                                        rating={rating}
-                                        onChange={setRating}
-                                        disabled={fetcher.state !== "idle"}
-                                    />
                                 </div>
 
                                 <textarea name="comment" rows={3} placeholder="Aggiungi dettagli (opzionale)..."
                                           className="w-full bg-surface border border-border px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary resize-none mt-2 text-sm"/>
 
-                                <button
-                                    type="submit"
-                                    disabled={fetcher.state !== "idle" || rating === 0}
-                                    className="w-full sm:w-auto bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 disabled:opacity-50 transition-opacity"
-                                >
+                                <button type="submit" disabled={fetcher.state !== "idle" || rating === 0}
+                                        className="w-full sm:w-auto bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 disabled:opacity-50 transition-opacity">
                                     {fetcher.state === "idle" ? "Pubblica Valutazione" : "Invio in corso..."}
                                 </button>
                             </fetcher.Form>
@@ -222,26 +247,20 @@ export default function BarrierDetailPage() {
 
                         {barrier.feedbacks.length > 0 ? (
                             <div className="space-y-4">
-                                {barrier.feedbacks.map(f => (
-                                    <div key={f.id} className="p-4 bg-background rounded-2xl border border-border/50">
-                                        <div className="flex justify-between mb-1">
-                                            <span
-                                                className="font-bold text-sm">{f.user?.firstName} {f.user?.lastName}</span>
-                                            <span className="text-warning font-bold text-sm flex items-center gap-1">
-                                                <Star className="w-4 h-4 fill-warning"/> {f.rating}
-                                            </span>
-                                        </div>
-                                        {f.comment && <p className="text-sm text-text mt-2">{f.comment}</p>}
-                                        <span
-                                            className="text-[10px] text-text-muted/70 mt-3 block uppercase tracking-wider">{formatDate(f.createdAt)}</span>
-                                    </div>
+                                {barrier.feedbacks.slice(0, 5).map(f => (
+                                    <FeedbackCard
+                                        key={f.id}
+                                        userFullName={`${f.user.firstName} ${f.user.lastName || ""}`}
+                                        rating={f.rating}
+                                        comment={f.comment}
+                                        createdAt={f.createdAt}
+                                    />
                                 ))}
                             </div>
                         ) : <p className="text-sm text-text-muted">Nessuna valutazione presente. Verifica tu questa
                             barriera!</p>}
                     </div>
 
-                    {/* SEZIONE REPORT */}
                     {profile && !isOwner && (
                         <details
                             className="group bg-surface rounded-3xl border border-border shadow-sm overflow-hidden">
@@ -272,7 +291,7 @@ export default function BarrierDetailPage() {
                                         </select>
                                         <button type="submit" disabled={fetcher.state !== "idle"}
                                                 className="w-full bg-error text-white py-3 rounded-xl font-bold shadow hover:bg-error/90 disabled:opacity-50 transition-opacity">
-                                            {fetcher.state !== "idle" ? "Invio in corso..." : "Invia Segnalazione"}
+                                            {fetcher.state === "idle" ? "Invia Segnalazione" : "Invio in corso..."}
                                         </button>
                                     </fetcher.Form>
                                 )}
@@ -280,16 +299,13 @@ export default function BarrierDetailPage() {
                         </details>
                     )}
 
-                    {/* AZIONI PROPRIETARIO / ADMIN */}
                     {canEdit && (
                         <div className="bg-surface p-6 rounded-3xl border border-border shadow-sm space-y-4">
                             <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Gestione
                                 Segnalazione</h3>
                             <div className="flex flex-col gap-3">
-                                <Link
-                                    to={`/app/barriers/${barrier.id}/edit`}
-                                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all active:scale-95"
-                                >
+                                <Link to={`/app/barriers/${barrier.id}/edit`}
+                                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all active:scale-95">
                                     <Edit className="w-5 h-5"/> Modifica Barriera
                                 </Link>
 
