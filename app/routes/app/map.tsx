@@ -196,7 +196,7 @@ export default function MapPage() {
     if (isLocating) return <Loading/>;
 
     return (
-        <div className="relative w-full h-full bg-surface overflow-hidden">
+        <div className="absolute inset-0 bg-surface overflow-hidden">
 
             {/* TOP BAR */}
             {navState !== "NAV" && (

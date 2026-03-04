@@ -18,15 +18,19 @@ export const links: Route.LinksFunction = () => [
         href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
     },
     {rel: "apple-touch-icon", href: "/icons/apple-icon-180.png"},
+    {rel: "manifest", href: "/manifest.json"},
 ];
 
 export const meta: MetaFunction = () => {
     return [
         {title: "InclusiveCity"},
         {name: "description", content: "Mappe accessibili per tutti"},
-
+        {
+            name: "viewport",
+            content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover"
+        },
         {name: "apple-mobile-web-app-capable", content: "yes"},
-        {name: "apple-mobile-web-app-status-bar-style", content: "default"},
+        {name: "apple-mobile-web-app-status-bar-style", content: "black-translucent"},
         {name: "apple-mobile-web-app-title", content: "InclusiveCity"},
     ];
 };
@@ -50,7 +54,7 @@ export function Layout({children}: Readonly<{ children: React.ReactNode }>) {
         <html lang="it">
         <head>
             <meta charSet="utf-8"/>
-            <meta name="viewport" content="width=device-width, initial-scale=1"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
             <Meta/>
             <Links/>
             <script dangerouslySetInnerHTML={{__html: THEME_INITIALIZER_SCRIPT}}/>

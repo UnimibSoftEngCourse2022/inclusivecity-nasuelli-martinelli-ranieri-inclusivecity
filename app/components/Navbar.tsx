@@ -21,7 +21,7 @@ export default function Navbar() {
     ];
 
     return (
-        <div className="flex items-center justify-around w-full h-full max-w-md mx-auto px-2">
+        <div className="flex items-center justify-around w-full max-w-md mx-auto h-13.5">
             {navItems.map((item) => {
                 const Icon = item.icon;
 
