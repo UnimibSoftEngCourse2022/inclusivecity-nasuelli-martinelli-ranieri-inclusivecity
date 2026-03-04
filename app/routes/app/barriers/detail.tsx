@@ -61,11 +61,23 @@ export async function action({request, params}: ActionFunctionArgs) {
             const rating = Number(formData.get("rating"));
             const comment = formData.get("comment") as string;
 
+            const existingFeedback = await prisma.feedback.findUnique({
+                where: {userId_barrierId: {userId, barrierId}}
+            });
+
             await prisma.feedback.upsert({
                 where: {userId_barrierId: {userId, barrierId}},
                 update: {rating, comment},
                 create: {id: crypto.randomUUID(), userId, barrierId, rating, comment: comment || null}
             });
+
+            if (!existingFeedback) {
+                await prisma.user.update({
+                    where: {id: userId},
+                    data: {reputationScore: {increment: 1}}
+                });
+            }
+
             return {success: true};
         }
 

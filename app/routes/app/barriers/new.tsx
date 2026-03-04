@@ -43,6 +43,11 @@ export async function action({request}: { request: Request }) {
                     NOW())
         `;
 
+        await prisma.user.update({
+            where: {id: data.userId},
+            data: {reputationScore: {increment: 2}}
+        });
+
         return redirect(`/app/barriers/${barrierId}?new=true`);
     } catch {
         return {error: "Errore durante il salvataggio nel database."};
