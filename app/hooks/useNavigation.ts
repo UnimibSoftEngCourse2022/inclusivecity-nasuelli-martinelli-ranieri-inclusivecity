@@ -39,12 +39,16 @@ export function useNavigation(orsApiKey: string) {
                     const polygonsCoords = hardBarriers
                         .map(b => {
                             const point = turf.point([b.lng, b.lat]);
-                            const buffered = turf.buffer(point, 15, {units: 'meters'});
+                            const buffered = turf.buffer(point, 15, {units: 'meters', steps: 8});
 
-                            if (buffered?.geometry) {
-                                return buffered.geometry.coordinates;
+                            if (!buffered) return null;
+
+                            const bbox = turf.bbox(buffered);
+                            const bboxPolygon = turf.bboxPolygon(bbox);
+
+                            if (bboxPolygon?.geometry) {
+                                return bboxPolygon.geometry.coordinates;
                             }
-
                             return null;
                         })
                         .filter(coords => coords !== null);
@@ -77,6 +81,10 @@ export function useNavigation(orsApiKey: string) {
                         body: JSON.stringify(body)
                     });
 
+                    if (!res.ok) {
+                        throw new Error(`Errore API ORS: ${res.status} ${res.statusText}`);
+                    }
+
                     const data = await res.json();
 
                     if (data.features && data.features.length > 0) {
@@ -88,12 +96,14 @@ export function useNavigation(orsApiKey: string) {
                             steps: routeFeature.properties.segments[0].steps,
                         });
                     } else {
-                        console.error("Nessun percorso trovato. Forse la meta è irraggiungibile!", data);
-                        alert("Impossibile trovare un percorso accessibile per questa destinazione.");
+                        console.warn("Nessun percorso trovato.", data);
+                        alert("Impossibile trovare un percorso accessibile. Forse ci sono troppe barriere o la meta è irraggiungibile.");
                         setNavState("IDLE");
                     }
                 } catch (error) {
                     console.error("Errore nel calcolo del percorso:", error);
+                    alert("Si è verificato un errore durante il calcolo del percorso.");
+                    setNavState("IDLE");
                 } finally {
                     setIsLoadingRoute(false);
                 }
@@ -104,7 +114,7 @@ export function useNavigation(orsApiKey: string) {
                 setIsLoadingRoute(false);
                 setNavState("IDLE");
             },
-            {enableHighAccuracy: true}
+            {enableHighAccuracy: true, timeout: 10000, maximumAge: 0}
         );
     }, [orsApiKey]);
 
