@@ -7,11 +7,13 @@ import {prisma} from "~/db.server";
 import {ArrowLeft, Camera, CheckCircle, Loader2, Lock, Save} from "lucide-react";
 import {profileSchema} from "~/utils/validations";
 
+
 export async function action({request}: ActionFunctionArgs) {
     const formData = await request.formData();
     const rawData = Object.fromEntries(formData);
 
     const parsed = profileSchema.safeParse(rawData);
+
     if (!parsed.success) {
         return {error: parsed.error.issues[0].message};
     }
@@ -73,7 +75,7 @@ export default function EditProfilePage() {
         }
     };
 
-    const handleProfileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleProfileSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         setClientError(null);
 
@@ -124,7 +126,7 @@ export default function EditProfilePage() {
         }
     };
 
-    const handlePasswordChange = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handlePasswordChange = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!newPassword || newPassword.length < 6) {
             setPasswordFeedback({type: 'error', msg: "La password deve avere almeno 6 caratteri."});
@@ -135,6 +137,7 @@ export default function EditProfilePage() {
         setPasswordFeedback(null);
 
         const {error} = await supabase.auth.updateUser({password: newPassword});
+
         setChangingPassword(false);
 
         if (!error) {
@@ -152,13 +155,10 @@ export default function EditProfilePage() {
         <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
 
             <header className="flex items-center gap-4">
-                <Link
-                    to="/app/profile"
-                    className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm"
-                >
+                <Link to="/app/profile"
+                      className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm">
                     <ArrowLeft className="w-5 h-5 text-text"/>
                 </Link>
-
                 <div>
                     <h1 className="text-2xl font-bold text-text">Modifica Account</h1>
                     <p className="text-sm text-text-muted mt-1">Gestisci i tuoi dati personali</p>
@@ -166,15 +166,21 @@ export default function EditProfilePage() {
             </header>
 
             {displayError && (
-                <div className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-medium shadow-sm">
+                <div
+                    className="p-4 bg-error/10 border border-error/20 text-error rounded-xl text-sm font-medium shadow-sm">
                     {displayError}
                 </div>
             )}
 
+            {/* DATI PROFILO */}
             <Form onSubmit={handleProfileSubmit} className="space-y-6">
-                <section className="bg-surface rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center">
+
+                {/* FOTO PROFILO */}
+                <section
+                    className="bg-surface rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center">
                     <div className="relative group cursor-pointer">
-                        <div className="w-24 h-24 rounded-full border-4 border-surface shadow-md bg-background overflow-hidden relative flex items-center justify-center">
+                        <div
+                            className="w-24 h-24 rounded-full border-4 border-surface shadow-md bg-background overflow-hidden relative flex items-center justify-center">
                             {photoPreview ? (
                                 <img src={photoPreview} alt="Profile Preview" className="w-full h-full object-cover"/>
                             ) : (
@@ -182,25 +188,20 @@ export default function EditProfilePage() {
                                     {profile.firstName?.[0] || "U"}
                                 </span>
                             )}
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <div
+                                className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <Camera className="w-8 h-8 text-white"/>
                             </div>
                         </div>
-
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            disabled={isSubmittingProfile}
-                        />
+                        <input type="file" accept="image/*" onChange={handleFileChange}
+                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                               disabled={isSubmittingProfile}/>
                     </div>
-
-                    <p className="text-sm font-medium text-text-muted mt-4">
-                        Tocca l'immagine per sceglierne una nuova
-                    </p>
+                    <p className="text-sm font-medium text-text-muted mt-4">Tocca l'immagine per sceglierne una
+                        nuova</p>
                 </section>
 
+                {/* DATI TESTUALI */}
                 <section className="bg-surface rounded-3xl border border-border p-6 shadow-sm space-y-4">
                     <h2 className="text-lg font-bold text-text mb-2">Dati Personali</h2>
 
@@ -209,7 +210,6 @@ export default function EditProfilePage() {
                             <label className={labelClass}>Nome <span className="text-error">*</span></label>
                             <input name="firstName" defaultValue={profile.firstName} required className={inputClass}/>
                         </div>
-
                         <div>
                             <label className={labelClass}>Cognome</label>
                             <input name="lastName" defaultValue={profile.lastName || ""} className={inputClass}/>
@@ -218,15 +218,10 @@ export default function EditProfilePage() {
 
                     <div>
                         <label className={labelClass}>Email (Non modificabile)</label>
-                        <input
-                            type="email"
-                            value={profile.email}
-                            disabled
-                            className={`${inputClass} opacity-60 cursor-not-allowed`}
-                        />
-                        <p className="text-xs text-text-muted mt-1.5">
-                            L'indirizzo email è legato al tuo account di accesso.
-                        </p>
+                        <input type="email" value={profile.email} disabled
+                               className={`${inputClass} opacity-60 cursor-not-allowed`}/>
+                        <p className="text-xs text-text-muted mt-1.5">L'indirizzo email è legato al tuo account di
+                            accesso.</p>
                     </div>
 
                     <button
@@ -234,28 +229,23 @@ export default function EditProfilePage() {
                         disabled={isSubmittingProfile}
                         className="w-full mt-4 flex items-center justify-center gap-2 bg-primary text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-primary/90 disabled:opacity-70 transition active:scale-95"
                     >
-                        {isSubmittingProfile ? <Loader2 className="w-5 h-5 animate-spin"/> : <Save className="w-5 h-5"/>}
+                        {isSubmittingProfile ? <Loader2 className="w-5 h-5 animate-spin"/> :
+                            <Save className="w-5 h-5"/>}
                         {isUploading ? "Caricamento foto..." : "Salva Profilo"}
                     </button>
                 </section>
             </Form>
 
-            <form
-                onSubmit={handlePasswordChange}
-                className="bg-surface rounded-3xl border border-border p-6 shadow-sm space-y-4"
-            >
+            {/* SICUREZZA E PASSWORD */}
+            <form onSubmit={handlePasswordChange}
+                  className="bg-surface rounded-3xl border border-border p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 text-lg font-bold text-text mb-2">
                     <Lock className="w-5 h-5 text-primary"/> Sicurezza
                 </div>
 
                 {passwordFeedback && (
                     <div
-                        className={`p-3 rounded-xl text-sm font-medium flex items-center gap-2 ${
-                            passwordFeedback.type === 'error'
-                                ? 'bg-error/10 text-error'
-                                : 'bg-success/10 text-success'
-                        }`}
-                    >
+                        className={`p-3 rounded-xl text-sm font-medium flex items-center gap-2 ${passwordFeedback.type === 'error' ? 'bg-error/10 text-error' : 'bg-success/10 text-success'}`}>
                         {passwordFeedback.type === 'success' && <CheckCircle className="w-4 h-4 shrink-0"/>}
                         {passwordFeedback.msg}
                     </div>
@@ -280,9 +270,7 @@ export default function EditProfilePage() {
                     {changingPassword ? <Loader2 className="w-5 h-5 animate-spin"/> : "Aggiorna Password"}
                 </button>
             </form>
+
         </div>
     );
 }
-
-
-        
