@@ -39,7 +39,7 @@ export default [
             route("barriers/:id/resolve", "routes/app/barriers/resolve.tsx"),
 
             // Area Admin
-            route("admin/reports.tsx", "routes/app/admin/reports.tsx"),
+            route("admin/reports", "routes/app/admin/reports.tsx"),
             route("admin/resolutions", "routes/app/admin/resolutions.tsx"),
         ]),
     ]),
