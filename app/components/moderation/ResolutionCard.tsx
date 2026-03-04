@@ -7,9 +7,17 @@ type Props = {
     evidenceUrl?: string | null;
     comment?: string | null;
     createdAt: Date | string;
+    isOwn?: boolean;
 };
 
-export default function ResolutionCard({userFullName, status, evidenceUrl, comment, createdAt}: Readonly<Props>) {
+export default function ResolutionCard({
+                                           userFullName,
+                                           status,
+                                           evidenceUrl,
+                                           comment,
+                                           createdAt,
+                                           isOwn
+                                       }: Readonly<Props>) {
     let badgeStyles, badgeText;
 
     if (status === ResolutionStatus.APPROVED) {
@@ -23,9 +31,13 @@ export default function ResolutionCard({userFullName, status, evidenceUrl, comme
         badgeStyles = 'bg-warning/10 text-warning border-warning/20';
     }
 
+    const containerStyles = isOwn
+        ? "bg-primary/5 border-primary shadow-md ring-1 ring-primary/20"
+        : "bg-background border-border/50 hover:border-primary/30";
+
     return (
         <div
-            className="p-4 bg-background rounded-2xl border border-border/50 flex flex-col sm:flex-row gap-4 hover:border-primary/30 transition-colors">
+            className={`p-4 rounded-2xl border flex flex-col sm:flex-row gap-4 transition-colors ${containerStyles}`}>
             {evidenceUrl && (
                 <div
                     className="w-full sm:w-32 h-32 shrink-0 rounded-xl overflow-hidden border border-border bg-surface">
@@ -34,10 +46,18 @@ export default function ResolutionCard({userFullName, status, evidenceUrl, comme
             )}
             <div className="flex-1 flex flex-col justify-between">
                 <div>
-                    <div className="flex justify-between items-start mb-2">
-                        <span className="font-bold text-sm text-text">{userFullName}</span>
+                    <div className="flex justify-between items-start mb-2 gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-sm text-text">{userFullName}</span>
+                            {isOwn && (
+                                <span
+                                    className="bg-primary text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md">
+                                    Tua Proposta
+                                </span>
+                            )}
+                        </div>
                         <span
-                            className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-lg border tracking-wider ${badgeStyles}`}>
+                            className={`shrink-0 text-[10px] font-bold uppercase px-2.5 py-1 rounded-lg border tracking-wider ${badgeStyles}`}>
                             {badgeText}
                         </span>
                     </div>

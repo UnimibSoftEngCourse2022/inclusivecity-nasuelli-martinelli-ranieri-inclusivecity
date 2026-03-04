@@ -187,6 +187,7 @@ export default function BarrierDetailPage() {
                         </div>
                     </div>
 
+                    {/* SEZIONE RISOLUZIONI PROPOSTE */}
                     {barrier.resolutions.length > 0 && (
                         <div className="bg-surface p-6 rounded-3xl border border-border shadow-sm space-y-5">
                             <h3 className="text-lg font-bold text-text flex items-center gap-2 border-b border-border pb-3">
@@ -202,12 +203,14 @@ export default function BarrierDetailPage() {
                                         evidenceUrl={res.evidenceUrl}
                                         comment={res.comment}
                                         createdAt={res.createdAt}
+                                        isOwn={res.user.id === profile?.id}
                                     />
                                 ))}
                             </div>
                             {barrier.resolutions.length > 5 && (
-                                <p className="text-xs text-text-muted text-center pt-2 italic">Mostrando le ultime 5
-                                    prove inserite.</p>
+                                <Link to={`/app/barriers/${barrier.id}/resolutions`} className="block text-center text-sm font-bold text-primary hover:underline mt-4 py-2 border border-primary/20 rounded-xl bg-primary/5 transition-colors">
+                                    Vedi tutte le {barrier.resolutions.length} prove
+                                </Link>
                             )}
                         </div>
                     )}
