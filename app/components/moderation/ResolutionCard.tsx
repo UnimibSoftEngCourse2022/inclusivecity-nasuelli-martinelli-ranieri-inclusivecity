@@ -1,4 +1,4 @@
-import {ResolutionStatus} from "@prisma/client";
+import type {ResolutionStatus} from "@prisma/client";
 import {formatDate} from "~/utils/format";
 
 type Props = {
@@ -20,10 +20,10 @@ export default function ResolutionCard({
                                        }: Readonly<Props>) {
     let badgeStyles, badgeText;
 
-    if (status === ResolutionStatus.APPROVED) {
+    if (status === "APPROVED") {
         badgeText = 'Approvata';
         badgeStyles = 'bg-success/10 text-success border-success/20';
-    } else if (status === ResolutionStatus.REJECTED) {
+    } else if (status === "REJECTED") {
         badgeText = 'Rifiutata';
         badgeStyles = 'bg-error/10 text-error border-error/20';
     } else {

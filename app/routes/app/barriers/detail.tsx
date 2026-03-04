@@ -1,7 +1,7 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from "react-router";
 import {Link, redirect, useFetcher, useLoaderData, useNavigate, useSubmit} from "react-router";
 import {prisma} from "~/db.server";
-import {BarrierState, ReportReason, Role} from "@prisma/client";
+import type {ReportReason} from "@prisma/client";
 import {useAuth} from "~/context/AuthContext";
 import {useState} from "react";
 import {AlertTriangle, ArrowLeft, Camera, CheckCircle, Edit, MapPin, Star, Trash2} from "lucide-react";
@@ -105,10 +105,10 @@ export default function BarrierDetailPage() {
 
     const [rating, setRating] = useState<number>(0);
 
-    const isAdmin = profile?.role === Role.ADMIN;
+    const isAdmin = profile?.role === "ADMIN";
     const isOwner = profile?.id === barrier.userId;
     const canEdit = isOwner || isAdmin;
-    const isResolved = barrier.state === BarrierState.RESOLVED;
+    const isResolved = barrier.state === "RESOLVED";
 
     const hasMyFeedback = barrier.feedbacks.some(f => f.userId === profile?.id);
     const showFeedbackForm = !isOwner && !hasMyFeedback;

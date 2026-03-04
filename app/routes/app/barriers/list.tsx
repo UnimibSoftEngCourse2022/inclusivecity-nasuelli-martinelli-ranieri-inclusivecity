@@ -2,7 +2,6 @@ import type {LoaderFunctionArgs} from "react-router";
 import {Link, useFetcher, useLoaderData, useNavigation as useReactNavigation, useSearchParams} from "react-router";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import {prisma} from "~/db.server";
-import {BarrierState} from "@prisma/client";
 import {useAuth} from "~/context/AuthContext";
 import {ListFilter, Loader2, MapPin, Plus, Search} from "lucide-react";
 import {getDynamicIcon} from "~/utils/icons";
@@ -23,10 +22,9 @@ export async function loader({request}: LoaderFunctionArgs) {
 
     const where: any = {};
 
-    if (stateParam !== "ALL") {
-        if (Object.values(BarrierState).includes(stateParam as BarrierState)) {
-            where.state = stateParam as BarrierState;
-        }
+    const validStates = ["ACTIVE", "IN_REVIEW", "RESOLVED", "HIDDEN"];
+    if (stateParam !== "ALL" && validStates.includes(stateParam)) {
+        where.state = stateParam;
     }
 
     if (q) {
@@ -248,10 +246,10 @@ export default function BarrierListPage() {
                             className="w-full pl-9 pr-4 py-3 rounded-xl border border-border bg-surface outline-none focus:ring-2 focus:ring-primary shadow-sm text-sm font-medium appearance-none cursor-pointer"
                         >
                             <option value="ALL">Tutti gli stati</option>
-                            <option value={BarrierState.ACTIVE}>Solo Attive</option>
-                            <option value={BarrierState.IN_REVIEW}>In Revisione</option>
-                            <option value={BarrierState.RESOLVED}>Risolte</option>
-                            <option value={BarrierState.HIDDEN}>Nascoste</option>
+                            <option value="ACTIVE">Solo Attive</option>
+                            <option value="IN_REVIEW">In Revisione</option>
+                            <option value="RESOLVED">Risolte</option>
+                            <option value="HIDDEN">Nascoste</option>
                         </select>
                     </div>
 
