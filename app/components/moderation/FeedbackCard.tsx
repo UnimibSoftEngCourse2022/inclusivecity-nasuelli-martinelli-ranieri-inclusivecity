@@ -6,15 +6,27 @@ type Props = {
     rating: number;
     comment?: string | null;
     createdAt: Date | string;
+    isOwn?: boolean;
 };
 
-export default function FeedbackCard({userFullName, rating, comment, createdAt}: Readonly<Props>) {
+export default function FeedbackCard({userFullName, rating, comment, createdAt, isOwn}: Readonly<Props>) {
+    const containerStyles = isOwn
+        ? "bg-primary/5 border-primary shadow-md ring-1 ring-primary/20"
+        : "bg-background border-border/50 hover:border-warning/30";
+
     return (
-        <div
-            className="p-4 bg-background rounded-2xl border border-border/50 hover:border-warning/30 transition-colors">
-            <div className="flex justify-between mb-1">
-                <span className="font-bold text-sm text-text">{userFullName}</span>
-                <span className="text-warning font-bold text-sm flex items-center gap-1">
+        <div className={`p-4 rounded-2xl border transition-colors ${containerStyles}`}>
+            <div className="flex justify-between items-start mb-1 gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-sm text-text">{userFullName}</span>
+                    {isOwn && (
+                        <span
+                            className="bg-primary text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md">
+                            Tua Valutazione
+                        </span>
+                    )}
+                </div>
+                <span className="text-warning font-bold text-sm flex items-center gap-1 shrink-0">
                     <Star className="w-4 h-4 fill-warning"/> {rating}
                 </span>
             </div>

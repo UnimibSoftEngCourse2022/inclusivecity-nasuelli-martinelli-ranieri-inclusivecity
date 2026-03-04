@@ -208,7 +208,8 @@ export default function BarrierDetailPage() {
                                 ))}
                             </div>
                             {barrier.resolutions.length > 5 && (
-                                <Link to={`/app/barriers/${barrier.id}/resolutions`} className="block text-center text-sm font-bold text-primary hover:underline mt-4 py-2 border border-primary/20 rounded-xl bg-primary/5 transition-colors">
+                                <Link to={`/app/barriers/${barrier.id}/resolutions`}
+                                      className="block text-center text-sm font-bold text-primary hover:underline mt-4 py-2 border border-primary/20 rounded-xl bg-primary/5 transition-colors">
                                     Vedi tutte le {barrier.resolutions.length} prove
                                 </Link>
                             )}
@@ -257,11 +258,19 @@ export default function BarrierDetailPage() {
                                         rating={f.rating}
                                         comment={f.comment}
                                         createdAt={f.createdAt}
+                                        isOwn={f.user.id === profile?.id}
                                     />
                                 ))}
                             </div>
                         ) : <p className="text-sm text-text-muted">Nessuna valutazione presente. Verifica tu questa
                             barriera!</p>}
+
+                        {barrier.feedbacks.length > 5 && (
+                            <Link to={`/app/barriers/${barrier.id}/feedbacks`}
+                                  className="block text-center text-sm font-bold text-primary hover:underline mt-4 py-2 border border-primary/20 rounded-xl bg-primary/5 transition-colors">
+                                Vedi tutte le {barrier.feedbacks.length} valutazioni
+                            </Link>
+                        )}
                     </div>
 
                     {profile && !isOwner && (
