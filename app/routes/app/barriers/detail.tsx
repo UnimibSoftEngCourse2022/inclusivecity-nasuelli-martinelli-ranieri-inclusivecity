@@ -1,492 +1,307 @@
-import {useEffect, useMemo, useState} from "react";
-import {Link, useNavigate, useParams} from "react-router";
-import type {Barrier, BarrierType, Feedback, User} from "@prisma/client";
-import {BarrierState, Role} from "@prisma/client";
-
-import {supabase} from "~/services/supabase/supabase";
+import type {ActionFunctionArgs, LoaderFunctionArgs} from "react-router";
+import {Link, redirect, useFetcher, useLoaderData, useNavigate, useSubmit} from "react-router";
+import {prisma} from "~/db.server";
+import {BarrierState, ReportReason, Role} from "@prisma/client";
 import {useAuth} from "~/context/AuthContext";
+import {useState} from "react";
+import {AlertTriangle, ArrowLeft, Camera, Edit, MapPin, Star, Trash2} from "lucide-react";
+import {getDynamicIcon} from "~/utils/icons";
+import StarRating from "~/components/barrier/StarRating";
+import PhotoGallery from "~/components/barrier/PhotoGallery";
 
-type BarrierDetail = Pick<
-  Barrier,
-  | "id"
-  | "title"
-  | "description"
-  | "address"
-  | "photoUrls"
-  | "difficulty"
-  | "state"
-  | "averageRating"
-  | "totalRatings"
-  | "createdAt"
-  | "userId"
-  | "typeId"
-> & {
-  type: Pick<BarrierType, "id" | "label" | "iconKey" | "colorHex"> | null;
-  creator: Pick<User, "id" | "firstName" | "lastName" | "role"> | null;
-  feedbacks?: Array<
-    Pick<Feedback, "id" | "rating" | "comment" | "createdAt" | "userId"> & {
-      user: Pick<User, "id" | "firstName" | "lastName"> | null;
+export async function loader({params}: LoaderFunctionArgs) {
+    const {id} = params;
+    if (!id) throw new Response("ID mancante", {status: 400});
+
+    const barrier = await prisma.barrier.findUnique({
+        where: {id},
+        include: {
+            type: {select: {id: true, label: true, iconKey: true, colorHex: true}},
+            creator: {select: {id: true, firstName: true, lastName: true, role: true}},
+            feedbacks: {
+                orderBy: {createdAt: 'desc'},
+                include: {user: {select: {id: true, firstName: true, lastName: true}}}
+            }
+        }
+    });
+
+    if (!barrier) throw new Response("Barriera non trovata", {status: 404});
+    return {barrier};
+}
+
+export async function action({request, params}: ActionFunctionArgs) {
+    const formData = await request.formData();
+    const intent = formData.get("intent");
+    const userId = formData.get("userId") as string;
+    const {id: barrierId} = params;
+
+    if (!userId || !barrierId) return {error: "Dati mancanti"};
+
+    try {
+        if (intent === "delete") {
+            const existingBarrier = await prisma.barrier.findUnique({where: {id: barrierId}});
+            const user = await prisma.user.findUnique({where: {id: userId}});
+
+            if (!existingBarrier || !user || (existingBarrier.userId !== user.id && user.role !== "ADMIN")) {
+                return {error: "Non sei autorizzato a eliminare questa barriera."};
+            }
+
+            await prisma.barrier.delete({where: {id: barrierId}});
+            return redirect("/app/barriers");
+        }
+
+        if (intent === "feedback") {
+            const rating = Number(formData.get("rating"));
+            const comment = formData.get("comment") as string;
+
+            await prisma.feedback.upsert({
+                where: {userId_barrierId: {userId, barrierId}},
+                update: {rating, comment},
+                create: {id: crypto.randomUUID(), userId, barrierId, rating, comment: comment || null}
+            });
+            return {success: true};
+        }
+
+        if (intent === "report") {
+            const reason = formData.get("reason") as ReportReason;
+            await prisma.report.upsert({
+                where: {userId_barrierId: {userId, barrierId}},
+                update: {reason, status: 'PENDING'},
+                create: {id: crypto.randomUUID(), userId, barrierId, reason, status: 'PENDING'}
+            });
+            return {success: true, reported: true};
+        }
+    } catch (error: any) {
+        return {error: error.message || "Errore durante l'operazione."};
     }
-  >;
-};
+    return null;
+}
 
 function formatDate(value: string | Date) {
-  const d = typeof value === "string" ? new Date(value) : value;
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("it-IT", {year: "numeric", month: "short", day: "2-digit"});
+    const d = typeof value === "string" ? new Date(value) : value;
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("it-IT", {year: "numeric", month: "long", day: "numeric"});
 }
 
 export default function BarrierDetailPage() {
-  const {id} = useParams();
-  const navigate = useNavigate();
-  const {profile} = useAuth();
+    const {barrier} = useLoaderData<typeof loader>();
+    const navigate = useNavigate();
+    const {profile} = useAuth();
+    const fetcher = useFetcher<typeof action>();
+    const submit = useSubmit();
 
-  const [barrier, setBarrier] = useState<BarrierDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [togglingState, setTogglingState] = useState(false);
+    const [rating, setRating] = useState<number>(0);
 
-  //permessi/azioni calcolati
-  const isAdmin = useMemo(() => profile?.role === Role.ADMIN, [profile?.role]);
-  const isOwner = useMemo(() => {
-    if (!profile?.id) return false;
-    return barrier?.userId === profile.id;
-  }, [barrier?.userId, profile?.id]);
+    const isAdmin = profile?.role === Role.ADMIN;
+    const isOwner = profile?.id === barrier.userId;
+    const canEdit = isOwner || isAdmin;
+    const isResolved = barrier.state === BarrierState.RESOLVED;
 
-  const canEdit = useMemo(() => isOwner || isAdmin, [isOwner, isAdmin]);
-  const canModerate = useMemo(() => isAdmin, [isAdmin]);
+    const hasMyFeedback = barrier.feedbacks.some(f => f.userId === profile?.id);
+    const showFeedbackForm = !isOwner && !hasMyFeedback;
 
-  // computed per toggle stato
-  const canToggleResolved =
-  !!barrier &&
-  canEdit &&
-  (barrier.state === BarrierState.ACTIVE || barrier.state === BarrierState.RESOLVED);
+    function handleDelete() {
+        if (!canEdit) return;
+        const ok = globalThis.confirm("Sei sicuro di voler eliminare definitivamente questa barriera? L'azione è irreversibile.");
+        if (!ok) return;
 
-  async function handleDelete() {
-    if (!barrier) return;
-    if (!canModerate) return;
-
-    const ok = window.confirm("Vuoi eliminare definitivamente questa barriera?");
-    if (!ok) return;
-
-    try {
-      setDeleting(true);
-
-      const { error } = await supabase.from("Barrier").delete().eq("id", barrier.id);
-      if (error) throw error;
-
-      // Torna alla lista dopo eliminazione
-      navigate("/app/barriers");
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Errore eliminando la barriera";
-      setError(message);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  const [rating, setRating] = useState<number>(5);
-  const [comment, setComment] = useState("");
-  const [sendingFeedback, setSendingFeedback] = useState(false);
-
-  async function handleSendFeedback() {
-    if (!barrier) return;
-    if (!profile?.id) {
-      setError("Devi essere autenticato per lasciare un feedback.");
-      return;
+        submit({intent: "delete", userId: profile.id}, {method: "post"});
     }
 
-    try {
-      setSendingFeedback(true);
+    const IconComponent = getDynamicIcon(barrier.type?.iconKey);
 
-      const { error } = await supabase.from("Feedback").insert({
-        barrierId: barrier.id,
-        userId: profile.id,
-        rating,
-        comment: comment.trim() ? comment.trim() : null,
-      });
-
-      if (error) throw error;
-
-      // ricarica dettagli per vedere feedback + rating aggiornati
-      // (riusiamo la pagina: modo semplice -> refetch con navigate(0) o rifare la query)
-      navigate(0);
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Errore inviando feedback";
-      setError(message);
-    } finally {
-      setSendingFeedback(false);
-    }
-  }
-
-  async function handleToggleResolved() {
-    if (!barrier) return;
-    if (!canEdit) return;
-
-    // Consentiamo il toggle solo tra ACTIVE e RESOLVED
-    if (barrier.state !== BarrierState.ACTIVE && barrier.state !== BarrierState.RESOLVED) {
-      setError("Questa barriera non può essere aggiornata da questo stato.");
-      return;
-    }
-
-    const nextState =
-      barrier.state === BarrierState.RESOLVED ? BarrierState.ACTIVE : BarrierState.RESOLVED;
-
-    try {
-      setTogglingState(true);
-
-      const { data, error } = await supabase
-        .from("Barrier")
-        .update({ state: nextState })
-        .eq("id", barrier.id)
-        .select(
-          `
-          id,
-          title,
-          description,
-          address,
-          photoUrls,
-          difficulty,
-          state,
-          averageRating,
-          totalRatings,
-          createdAt,
-          userId,
-          typeId,
-          type:BarrierType ( id, label, iconKey, colorHex ),
-          creator:User ( id, firstName, lastName, role ),
-          feedbacks:Feedback (
-            id,
-            rating,
-            comment,
-            createdAt,
-            userId,
-            user:User ( id, firstName, lastName )
-          )
-        `
-        )
-        .single();
-
-      if (error) throw error;
-
-      setBarrier(data as unknown as BarrierDetail);
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Errore aggiornando lo stato";
-      setError(message);
-    } finally {
-      setTogglingState(false);
-    }
-  }
-
-  // fetch da supabase
-  useEffect(() => {
-    if (!id) return;
-
-    let cancelled = false;
-
-    async function fetchBarrierDetail() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const { data, error } = await supabase
-          .from("Barrier")
-          .select(
-            `
-            id,
-            title,
-            description,
-            address,
-            photoUrls,
-            difficulty,
-            state,
-            averageRating,
-            totalRatings,
-            createdAt,
-            userId,
-            typeId,
-            type:BarrierType ( id, label, iconKey, colorHex ),
-            creator:User ( id, firstName, lastName, role ),
-            feedbacks:Feedback (
-              id,
-              rating,
-              comment,
-              createdAt,
-              userId,
-              user:User ( id, firstName, lastName )
-            )
-          `
-          )
-          .eq("id", id)
-          .single();
-
-        if (error) throw error;
-        if (cancelled) return;
-
-        // ordina feedback più recenti prima (se supabase non garantisce ordine)
-        const sorted = {
-          ...(data as any),
-          feedbacks: Array.isArray((data as any).feedbacks)
-            ? [...(data as any).feedbacks].sort(
-                (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-              )
-            : [],
-        };
-
-        setBarrier(sorted as BarrierDetail);
-      } catch (e: unknown) {
-        if (cancelled) return;
-        const message = e instanceof Error ? e.message : "Errore sconosciuto nel caricamento della barriera";
-        setError(message);
-        setBarrier(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchBarrierDetail();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
-  if (!id) {
     return (
-      <div className="p-4">
-        <p className="text-sm">ID barriera mancante.</p>
-        <button className="mt-2 rounded-md border px-3 py-2 text-sm" onClick={() => navigate(-1)}>
-          Indietro
-        </button>
-      </div>
-    );
-  }
+        <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-20 animate-in fade-in duration-300">
 
-  if (loading) return <div className="p-4 text-sm">Caricamento...</div>;
-
-  if (error) {
-    return (
-      <div className="p-4 space-y-2">
-        <div className="rounded-md border p-3 text-sm">
-          <div className="font-medium">Errore</div>
-          <div className="opacity-80">{error}</div>
-        </div>
-        <button className="rounded-md border px-3 py-2 text-sm" onClick={() => navigate(-1)}>
-          Indietro
-        </button>
-      </div>
-    );
-  }
-
-  if (!barrier) {
-    return (
-      <div className="p-4 space-y-2">
-        <div className="rounded-md border p-3 text-sm opacity-80">Barriera non trovata.</div>
-        <Link className="inline-flex rounded-md border px-3 py-2 text-sm" to="/app/barriers">
-          Torna alla lista
-        </Link>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-4 space-y-4">
-      <header className="space-y-1">
-        <h1 className="text-xl font-semibold">{barrier.title}</h1>
-        <div className="text-sm opacity-80">
-          {barrier.address ? barrier.address : "Indirizzo non disponibile"} • {formatDate(barrier.createdAt)}
-        </div>
-      </header>
-
-      <section className="grid gap-3 md:grid-cols-3">
-        {/* Colonna sinistra: foto (prima foto se presente) */}
-        <div className="md:col-span-1">
-          <div className="rounded-md border overflow-hidden bg-black/5">
-            {Array.isArray(barrier.photoUrls) && barrier.photoUrls.length > 0 ? (
-              <img
-                src={barrier.photoUrls[0]}
-                alt={barrier.title}
-                className="h-56 w-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="h-56 flex items-center justify-center text-sm opacity-70">
-                Nessuna foto
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Colonna destra: dettagli */}
-        <div className="md:col-span-2 space-y-3">
-          <div className="rounded-md border p-3 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border px-2 py-1 text-xs">
-                Stato: {barrier.state}
-              </span>
-
-              <span className="rounded-full border px-2 py-1 text-xs">
-                Difficoltà: {barrier.difficulty ?? "-"}
-              </span>
-
-              {barrier.type?.label ? (
-                <span className="rounded-full border px-2 py-1 text-xs">
-                  Tipo: {barrier.type.label}
-                </span>
-              ) : null}
+            {/* INTESTAZIONE */}
+            <div className="flex items-center gap-4">
+                <button onClick={() => navigate(-1)}
+                        className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm">
+                    <ArrowLeft className="w-5 h-5 text-text"/>
+                </button>
+                <div>
+                    <h1 className="text-2xl font-bold text-text">{barrier.title}</h1>
+                    <p className="text-sm text-text-muted mt-1 flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 shrink-0"/>
+                        {barrier.address || "Indirizzo non specificato"}
+                    </p>
+                </div>
             </div>
 
-            <div className="text-sm">
-              <div className="font-medium">Descrizione</div>
-              <div className="opacity-90">
-                {barrier.description ? barrier.description : "Nessuna descrizione."}
-              </div>
-            </div>
+            {fetcher.data?.error &&
+                <div className="p-4 bg-error/10 text-error rounded-xl text-sm font-medium">{fetcher.data.error}</div>}
 
-            <div className="text-sm grid gap-1">
-              <div>
-                <span className="opacity-70">Creatore:</span>{" "}
-                {barrier.creator
-                  ? `${barrier.creator.firstName} ${barrier.creator.lastName}`
-                  : "Sconosciuto"}
-              </div>
-              <div>
-                <span className="opacity-70">Rating medio:</span>{" "}
-                {barrier.totalRatings && barrier.totalRatings > 0
-                  ? `${Number(barrier.averageRating ?? 0).toFixed(1)} (${barrier.totalRatings})`
-                  : "Nessun voto"}
-              </div>
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* COLONNA SX */}
+                <div className="md:col-span-1 space-y-4">
+                    <div className="relative w-full">
+                        <PhotoGallery photos={barrier.photoUrls} altText={barrier.title}/>
+                        <div className="absolute top-4 left-4 pointer-events-none">
+                            <span
+                                className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase border shadow-md backdrop-blur-md ${barrier.state === 'ACTIVE' ? 'bg-error/90 text-white border-error/20' : ''} ${barrier.state === 'RESOLVED' ? 'bg-success/90 text-white border-success/20' : ''} ${barrier.state === 'IN_REVIEW' ? 'bg-warning/90 text-white border-warning/20' : ''} ${barrier.state === 'HIDDEN' ? 'bg-surface/90 text-text border-border' : ''}`}>
+                                {barrier.state}
+                            </span>
+                        </div>
+                    </div>
 
-          {/* Azioni (per ora solo visibili, le implementiamo step 4) */}
-          <div className="rounded-md border p-3 flex flex-wrap gap-2">
-            <button
-              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-              disabled={!canEdit}
-              title={!canEdit ? "Solo il creatore o un admin può modificare" : undefined}
-              onClick={() => navigate(`/app/barriers/${barrier.id}/edit`)}
-            >
-              Modifica
-            </button>
-            
-            <button
-              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-              disabled={!canToggleResolved || togglingState}
-              title={
-                !canEdit
-                  ? "Solo il creatore o un admin può cambiare lo stato"
-                  : !canToggleResolved
-                    ? "Disponibile solo per stati ACTIVE/RESOLVED"
-                    : undefined
-              }
-              onClick={handleToggleResolved}
-            >
-              {togglingState
-                ? "Aggiorno..."
-                : barrier.state === BarrierState.RESOLVED
-                  ? "Riapri"
-                  : "Segna risolta"}
-            </button>
+                    <div className="bg-surface p-5 rounded-3xl border border-border shadow-sm text-sm">
+                        <div className="flex justify-between mb-2 pb-2 border-b border-border/50"><span
+                            className="text-text-muted">Segnalato da</span><span
+                            className="font-bold">{barrier.creator?.firstName}</span></div>
+                        <div className="flex justify-between"><span className="text-text-muted">In data</span><span
+                            className="font-bold">{formatDate(barrier.createdAt)}</span></div>
+                    </div>
 
-            <button
-              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-              disabled={!canModerate || deleting}
-              title={!canModerate ? "Solo un admin può eliminare" : undefined}
-              onClick={handleDelete}
-            >
-              {deleting ? "Elimino..." : "Elimina"}
-            </button>
-
-            <button
-              className="rounded-md border px-3 py-2 text-sm"
-              onClick={() => navigate(-1)}
-            >
-              Indietro
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Feedback</h2>
-        
-        <div className="rounded-md border p-3 space-y-2">
-          <div className="text-sm font-medium">Lascia un feedback</div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="text-sm opacity-80">Voto</label>
-            <select
-              className="rounded-md border px-2 py-1 text-sm"
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-              disabled={sendingFeedback}
-            >
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <textarea
-            className="w-full rounded-md border p-2 text-sm"
-            rows={3}
-            placeholder="Commento (opzionale)"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            disabled={sendingFeedback}
-          />
-
-          <div className="flex gap-2">
-            <button
-              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-              onClick={handleSendFeedback}
-              disabled={sendingFeedback}
-            >
-              {sendingFeedback ? "Invio..." : "Invia"}
-            </button>
-            <button
-              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-              onClick={() => setComment("")}
-              disabled={sendingFeedback}
-            >
-              Pulisci
-            </button>
-          </div>
-        </div>
-
-        {barrier.feedbacks && barrier.feedbacks.length > 0 ? (
-          <div className="space-y-2">
-            {barrier.feedbacks.map((f) => (
-              <div key={f.id} className="rounded-md border p-3 space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-medium">
-                    {f.user ? `${f.user.firstName} ${f.user.lastName}` : "Utente"}
-                  </div>
-                  <div className="text-sm">
-                    <span className="opacity-70">Voto:</span> {f.rating}
-                  </div>
+                    {!isResolved && (
+                        <Link to={`/app/barriers/${barrier.id}/resolve`}
+                              className="w-full flex items-center justify-center gap-2 bg-success text-white py-3.5 rounded-2xl font-bold shadow-md hover:bg-success/90 transition active:scale-95">
+                            <Camera className="w-5 h-5"/> Proponi Risoluzione
+                        </Link>
+                    )}
                 </div>
 
-                {f.comment ? (
-                  <div className="text-sm opacity-90">{f.comment}</div>
-                ) : (
-                  <div className="text-sm opacity-70">Nessun commento.</div>
-                )}
+                {/* COLONNA DX */}
+                <div className="md:col-span-2 space-y-6">
+                    <div className="bg-surface p-6 rounded-3xl border border-border shadow-sm space-y-6">
+                        <div className="flex flex-wrap gap-3">
+                            <div
+                                className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl border border-primary/20">
+                                <IconComponent className="w-5 h-5"/><span
+                                className="text-sm font-bold">{barrier.type?.label}</span>
+                            </div>
+                            <div
+                                className="flex items-center gap-2 bg-error/10 text-error px-4 py-2 rounded-xl border border-error/20">
+                                <span className="text-sm font-bold uppercase">Livello {barrier.difficulty}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="text-xs font-bold text-text-muted uppercase mb-2">Descrizione</h3>
+                            <p className="text-text leading-relaxed">{barrier.description}</p>
+                        </div>
+                    </div>
 
-                <div className="text-xs opacity-70">{formatDate(f.createdAt)}</div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-md border p-3 text-sm opacity-80">
-            Nessun feedback ancora.
-          </div>
-        )}
-      </section>
-    </div>
-  );
+                    {/* SEZIONE FEEDBACK */}
+                    <div className="bg-surface p-6 rounded-3xl border border-border shadow-sm space-y-6">
+                        <div className="flex justify-between items-center border-b border-border pb-2">
+                            <h3 className="text-lg font-bold text-text flex items-center gap-2"><Star
+                                className="w-5 h-5 text-warning"/> Affidabilità</h3>
+                            {barrier.totalRatings > 0 && <span
+                                className="text-sm font-bold bg-warning/10 text-warning px-3 py-1 rounded-full">{Number(barrier.averageRating).toFixed(1)} / 5</span>}
+                        </div>
+
+                        {showFeedbackForm && profile && (
+                            <fetcher.Form method="post"
+                                          className="space-y-4 bg-background p-5 rounded-2xl border border-border">
+                                <input type="hidden" name="intent" value="feedback"/>
+                                <input type="hidden" name="userId" value={profile.id}/>
+                                <input type="hidden" name="rating" value={rating}/>
+
+                                <div className="flex flex-col items-center sm:items-start">
+                                    <label className="block text-sm font-bold text-text mb-2">
+                                        Quanto è accurata questa segnalazione?
+                                    </label>
+                                    <StarRating
+                                        rating={rating}
+                                        onChange={setRating}
+                                        disabled={fetcher.state !== "idle"}
+                                    />
+                                </div>
+
+                                <textarea name="comment" rows={3} placeholder="Aggiungi dettagli (opzionale)..."
+                                          className="w-full bg-surface border border-border px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary resize-none mt-2 text-sm"/>
+
+                                <button
+                                    type="submit"
+                                    disabled={fetcher.state !== "idle" || rating === 0}
+                                    className="w-full sm:w-auto bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 disabled:opacity-50 transition-opacity"
+                                >
+                                    {fetcher.state === "idle" ? "Pubblica Valutazione" : "Invio in corso..."}
+                                </button>
+                            </fetcher.Form>
+                        )}
+
+                        {barrier.feedbacks.length > 0 ? (
+                            <div className="space-y-4">
+                                {barrier.feedbacks.map(f => (
+                                    <div key={f.id} className="p-4 bg-background rounded-2xl border border-border/50">
+                                        <div className="flex justify-between mb-1">
+                                            <span
+                                                className="font-bold text-sm">{f.user?.firstName} {f.user?.lastName}</span>
+                                            <span className="text-warning font-bold text-sm flex items-center gap-1">
+                                                <Star className="w-4 h-4 fill-warning"/> {f.rating}
+                                            </span>
+                                        </div>
+                                        {f.comment && <p className="text-sm text-text mt-2">{f.comment}</p>}
+                                        <span
+                                            className="text-[10px] text-text-muted/70 mt-3 block uppercase tracking-wider">{formatDate(f.createdAt)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : <p className="text-sm text-text-muted">Nessuna valutazione presente. Verifica tu questa
+                            barriera!</p>}
+                    </div>
+
+                    {/* SEZIONE REPORT */}
+                    {profile && !isOwner && (
+                        <details
+                            className="group bg-surface rounded-3xl border border-border shadow-sm overflow-hidden">
+                            <summary
+                                className="cursor-pointer p-4 flex items-center justify-between font-bold text-error/80 hover:bg-error/5 transition-colors list-none">
+                                <span className="flex items-center gap-2"><AlertTriangle className="w-5 h-5"/> Segnala un problema (Admin)</span>
+                            </summary>
+                            <div className="p-6 border-t border-border bg-background">
+                                {fetcher.data?.reported ? (
+                                    <div className="text-success font-medium text-sm text-center">Segnalazione inviata!
+                                        I moderatori controlleranno presto.</div>
+                                ) : (
+                                    <fetcher.Form method="post" className="space-y-4">
+                                        <input type="hidden" name="intent" value="report"/>
+                                        <input type="hidden" name="userId" value={profile.id}/>
+
+                                        <p className="text-sm text-text-muted">Se ritieni che questa segnalazione violi
+                                            le regole o contenga errori gravi, avvisa i moderatori.</p>
+                                        <select name="reason" required
+                                                className="w-full bg-surface border border-border px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-error text-sm">
+                                            <option value="DOES_NOT_EXIST">L'ostacolo non esiste più</option>
+                                            <option value="DUPLICATE">È un duplicato di un'altra barriera</option>
+                                            <option value="WRONG_LOCATION">La posizione sulla mappa è palesemente
+                                                errata
+                                            </option>
+                                            <option value="INAPPROPRIATE">Contenuto offensivo o spam</option>
+                                            <option value="OTHER">Altro</option>
+                                        </select>
+                                        <button type="submit" disabled={fetcher.state !== "idle"}
+                                                className="w-full bg-error text-white py-3 rounded-xl font-bold shadow hover:bg-error/90 disabled:opacity-50 transition-opacity">
+                                            {fetcher.state !== "idle" ? "Invio in corso..." : "Invia Segnalazione"}
+                                        </button>
+                                    </fetcher.Form>
+                                )}
+                            </div>
+                        </details>
+                    )}
+
+                    {/* AZIONI PROPRIETARIO / ADMIN */}
+                    {canEdit && (
+                        <div className="bg-surface p-6 rounded-3xl border border-border shadow-sm space-y-4">
+                            <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Gestione
+                                Segnalazione</h3>
+                            <div className="flex flex-col gap-3">
+                                <Link
+                                    to={`/app/barriers/${barrier.id}/edit`}
+                                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-all active:scale-95"
+                                >
+                                    <Edit className="w-5 h-5"/> Modifica Barriera
+                                </Link>
+
+                                <button onClick={handleDelete}
+                                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm bg-error/10 text-error hover:bg-error/20 border border-error/20 transition-all active:scale-95 disabled:opacity-50">
+                                    <Trash2 className="w-5 h-5"/> Elimina Barriera
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 }
