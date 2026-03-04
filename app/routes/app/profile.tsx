@@ -70,12 +70,14 @@ export default function ProfilePage() {
                     )}
                 </div>
 
-                {!isSupported && <p className="text-error text-xs font-medium mt-2">Il tuo dispositivo non supporta le
-                    notifiche.</p>}
-                {permission === "denied" &&
-                    <p className="text-error text-xs font-medium mt-2">Hai bloccato le notifiche. Sblocca i permessi dal
-                        browser.</p>}
-                {notifError && <p className="text-error text-xs font-medium mt-2">{notifError}</p>}
+                {permission === "denied" && !notifError && (
+                    <p className="text-error text-xs font-medium mt-2">
+                        Hai bloccato le notifiche. Sblocca i permessi dal browser.
+                    </p>
+                )}
+                {notifError && (
+                    <p className="text-error text-xs font-medium mt-2">{notifError}</p>
+                )}
             </section>
 
             {/* MENU NAVIGAZIONE */}
