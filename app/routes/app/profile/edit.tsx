@@ -140,11 +140,11 @@ export default function EditProfilePage() {
 
         setChangingPassword(false);
 
-        if (!error) {
+        if (error) {
+            setPasswordFeedback({type: 'error', msg: "Errore durante l'aggiornamento. Riprova."});
+        } else {
             setPasswordFeedback({type: 'success', msg: "Password aggiornata con successo!"});
             setNewPassword("");
-        } else {
-            setPasswordFeedback({type: 'error', msg: "Errore durante l'aggiornamento. Riprova."});
         }
     };
 
@@ -207,19 +207,24 @@ export default function EditProfilePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className={labelClass}>Nome <span className="text-error">*</span></label>
-                            <input name="firstName" defaultValue={profile.firstName} required className={inputClass}/>
+                            <label className={labelClass}>Nome <span className="text-error">*</span>
+                                <input name="firstName" defaultValue={profile.firstName} required
+                                       className={inputClass}/>
+                            </label>
                         </div>
                         <div>
-                            <label className={labelClass}>Cognome</label>
-                            <input name="lastName" defaultValue={profile.lastName || ""} className={inputClass}/>
+                            <label className={labelClass}>
+                                Cognome <input name="lastName" defaultValue={profile.lastName || ""}
+                                               className={inputClass}/>
+                            </label>
                         </div>
                     </div>
 
                     <div>
-                        <label className={labelClass}>Email (Non modificabile)</label>
-                        <input type="email" value={profile.email} disabled
-                               className={`${inputClass} opacity-60 cursor-not-allowed`}/>
+                        <label className={labelClass}>
+                            Email (Non modificabile) <input type="email" value={profile.email} disabled
+                                                            className={`${inputClass} opacity-60 cursor-not-allowed`}/>
+                        </label>
                         <p className="text-xs text-text-muted mt-1.5">L'indirizzo email è legato al tuo account di
                             accesso.</p>
                     </div>
@@ -252,14 +257,15 @@ export default function EditProfilePage() {
                 )}
 
                 <div>
-                    <label className={labelClass}>Nuova Password</label>
-                    <input
+                    <label className={labelClass}>
+                        Nuova Password <input
                         type="password"
                         placeholder="Inserisci almeno 6 caratteri"
                         className={inputClass}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                     />
+                    </label>
                 </div>
 
                 <button

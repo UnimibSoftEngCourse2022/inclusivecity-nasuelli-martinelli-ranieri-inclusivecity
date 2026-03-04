@@ -31,14 +31,14 @@ export function usePushNotifications() {
     }, [user]);
 
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            if (!("Notification" in window)) {
-                setIsSupported(false);
-            } else {
+        if (globalThis.window !== undefined) {
+            if ("Notification" in globalThis) {
                 setPermission(Notification.permission);
                 if (Notification.permission === "granted" && user) {
                     checkSubscription();
                 }
+            } else {
+                setIsSupported(false);
             }
         }
     }, [user, checkSubscription]);

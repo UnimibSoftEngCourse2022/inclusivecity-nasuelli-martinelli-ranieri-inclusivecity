@@ -113,7 +113,7 @@ export default function ResolveBarrierPage() {
     return (
         <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6 animate-in fade-in">
             <div className="flex items-center gap-4">
-                <button onClick={() => window.history.back()}
+                <button onClick={() => globalThis.history.back()}
                         className="p-3 bg-surface border border-border rounded-full hover:bg-background shadow-sm">
                     <ArrowLeft className="w-5 h-5 text-text"/>
                 </button>
@@ -130,9 +130,10 @@ export default function ResolveBarrierPage() {
                   className="bg-surface p-6 rounded-3xl border border-border shadow-sm space-y-6">
                 <div>
                     <label className="block text-sm font-semibold text-text mb-2">Foto della barriera risolta <span
-                        className="text-error">*</span></label>
-                    <input id="photo" type="file" accept="image/*" capture="environment" className="hidden"
-                           onChange={handleFileChange}/>
+                        className="text-error">*</span>
+                        <input id="photo" type="file" accept="image/*" capture="environment" className="hidden"
+                               onChange={handleFileChange}/>
+                    </label>
 
                     {photoPreview ? (
                         <div
@@ -154,13 +155,13 @@ export default function ResolveBarrierPage() {
 
                 <div>
                     <label className="block text-sm font-semibold text-text mb-2">Dettagli dell'intervento
-                        (Opzionale)</label>
-                    <textarea
-                        value={comment} onChange={(e) => setComment(e.target.value)}
-                        placeholder="Es. Il gradino è stato rimosso e sostituito con uno scivolo a norma..."
-                        rows={3}
-                        className="w-full bg-background border border-border px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary resize-none text-text"
-                    />
+                        (Opzionale) <textarea
+                            value={comment} onChange={(e) => setComment(e.target.value)}
+                            placeholder="Es. Il gradino è stato rimosso e sostituito con uno scivolo a norma..."
+                            rows={3}
+                            className="w-full bg-background border border-border px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary resize-none text-text"
+                        />
+                    </label>
                 </div>
 
                 <button type="submit" disabled={isSubmitting}

@@ -13,7 +13,7 @@ export async function loader({request, params}: LoaderFunctionArgs) {
     const url = new URL(request.url);
     const q = (url.searchParams.get("q") ?? "").trim();
     const pageParam = url.searchParams.get("page");
-    const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+    const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
     const PAGE_SIZE = 10;
 
     const barrier = await prisma.barrier.findUnique({
@@ -82,15 +82,22 @@ export default function FeedbacksListPage() {
 
     // Aggiunta Items (Infinite Scroll)
     useEffect(() => {
-        if (fetcher.data && fetcher.state === "idle" && fetcher.data.page > activePage) {
-            if (fetcher.data.q === q) {
-                setItems((prev) => {
-                    const newItems = fetcher.data!.feedbacks.filter(f => !prev.some(p => p.id === f.id));
-                    return [...prev, ...newItems];
-                });
-                setActivePage(fetcher.data.page);
-            }
+        if (!fetcher.data || fetcher.state !== "idle" || fetcher.data.page <= activePage || fetcher.data.q !== q) {
+            return;
         }
+
+        const fetchedFeedbacks = fetcher.data.feedbacks;
+        const nextPage = fetcher.data.page;
+
+        setItems((prev) => {
+            const existingIds = new Set(prev.map(item => item.id));
+
+            const newItems = fetchedFeedbacks.filter(item => !existingIds.has(item.id));
+
+            return [...prev, ...newItems];
+        });
+
+        setActivePage(nextPage);
     }, [fetcher.data, fetcher.state, activePage, q]);
 
     // Observer Infinite Scroll
@@ -147,7 +154,7 @@ export default function FeedbacksListPage() {
                             </span>
                         )}
                     </div>
-                    <p className="text-sm text-text-muted mt-1 truncate max-w-[250px] sm:max-w-md">Per: {barrier.title}</p>
+                    <p className="text-sm text-text-muted mt-1 truncate max-w-62.5 sm:max-w-md">Per: {barrier.title}</p>
                 </div>
             </div>
 

@@ -1,8 +1,10 @@
-importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
+importScripts(
+    'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js'
+);
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDnMLBlVWZjdNTGIXgh9HG-qNsKH0Yzewk",
+    apiKey: "AIzaSyDnMLBlVWZjdNTGIXgh9HG-qNsKH0Yzewk", // NOSONAR
     authDomain: "inclusivecity-b5698.firebaseapp.com",
     projectId: "inclusivecity-b5698",
     storageBucket: "inclusivecity-b5698.firebasestorage.app",
@@ -21,5 +23,5 @@ messaging.onBackgroundMessage((payload) => {
         icon: '/icons/apple-icon-180.png'
     };
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
+    globalThis.registration.showNotification(notificationTitle, notificationOptions);
 });

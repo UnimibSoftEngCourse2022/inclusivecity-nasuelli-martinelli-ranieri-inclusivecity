@@ -18,7 +18,7 @@ export async function loader({request}: LoaderFunctionArgs) {
     const defaultState = viewParam === "me" ? "ALL" : "ACTIVE";
     const stateParam = url.searchParams.get("state") ?? defaultState;
 
-    const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+    const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
     const PAGE_SIZE = 10;
 
     const where: any = {};
@@ -117,21 +117,31 @@ export default function BarrierListPage() {
     }, [currentView, searchParams, user, setSearchParams]);
 
     useEffect(() => {
-        if (fetcher.data && fetcher.state === "idle" && fetcher.data.page > activePage) {
-            const isSameFilter =
-                fetcher.data.q === q &&
-                fetcher.data.stateParam === stateParam &&
-                fetcher.data.viewParam === viewParam &&
-                fetcher.data.sortParam === sortParam;
-
-            if (isSameFilter) {
-                setItems((prev) => {
-                    const newItems = fetcher.data!.barriers.filter(b => !prev.some(p => p.id === b.id));
-                    return [...prev, ...newItems];
-                });
-                setActivePage(fetcher.data.page);
-            }
+        if (!fetcher.data || fetcher.state !== "idle" || fetcher.data.page <= activePage) {
+            return;
         }
+
+        const isSameFilter =
+            fetcher.data.q === q &&
+            fetcher.data.stateParam === stateParam &&
+            fetcher.data.viewParam === viewParam &&
+            fetcher.data.sortParam === sortParam;
+
+        if (!isSameFilter) {
+            return;
+        }
+
+        const fetchedBarriers = fetcher.data.barriers;
+        const nextPage = fetcher.data.page;
+
+        setItems((prev) => {
+            const existingIds = new Set(prev.map(item => item.id));
+            const newItems = fetchedBarriers.filter(b => !existingIds.has(b.id));
+
+            return [...prev, ...newItems];
+        });
+
+        setActivePage(nextPage);
     }, [fetcher.data, fetcher.state, activePage, q, stateParam, viewParam, sortParam]);
 
     const observer = useRef<IntersectionObserver | null>(null);

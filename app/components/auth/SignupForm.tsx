@@ -59,7 +59,6 @@ export default function SignUpForm() {
             if (data.session) {
                 navigate("/app/map");
             } else {
-                // Caso in cui sia richiesta conferma email
                 navigate("/auth/login");
             }
         } catch (e: any) {
@@ -89,8 +88,8 @@ export default function SignUpForm() {
                     {/* Nome */}
                     <div>
                         <label className={labelClass}>
-                            <input {...register("firstName")} type="text" className={inputClass} placeholder="Mario"/>
-                            Nome
+                            Nome <input {...register("firstName")} type="text" className={inputClass}
+                                        placeholder="Mario"/>
                         </label>
                         {errors.firstName && <p className={errorClass}>{errors.firstName.message}</p>}
                     </div>
@@ -98,8 +97,8 @@ export default function SignUpForm() {
                     {/* Cognome */}
                     <div>
                         <label className={labelClass}>
-                            <input {...register("lastName")} type="text" className={inputClass} placeholder="Rossi"/>
-                            Cognome
+                            Cognome <input {...register("lastName")} type="text" className={inputClass}
+                                           placeholder="Rossi"/>
                         </label>
                         {errors.lastName && <p className={errorClass}>{errors.lastName.message}</p>}
                     </div>
@@ -108,9 +107,8 @@ export default function SignUpForm() {
                 {/* Email */}
                 <div>
                     <label className={labelClass}>
-                        <input {...register("email")} type="email" className={inputClass}
-                               placeholder="nome@esempio.com"/>
-                        Email
+                        Email <input {...register("email")} type="email" className={inputClass}
+                                     placeholder="nome@esempio.com"/>
                     </label>
                     {errors.email && <p className={errorClass}>{errors.email.message}</p>}
                 </div>
@@ -118,8 +116,8 @@ export default function SignUpForm() {
                 {/* Password */}
                 <div>
                     <label className={labelClass}>
-                        <input {...register("password")} type="password" className={inputClass} placeholder="••••••"/>
-                        Password
+                        Password <input {...register("password")} type="password" className={inputClass}
+                                        placeholder="••••••"/>
                     </label>
                     {errors.password && <p className={errorClass}>{errors.password.message}</p>}
                 </div>
@@ -127,9 +125,8 @@ export default function SignUpForm() {
                 {/* Conferma Password */}
                 <div>
                     <label className={labelClass}>
-                        <input {...register("confirmPassword")} type="password" className={inputClass}
-                               placeholder="••••••"/>
-                        Conferma Password
+                        Conferma Password <input {...register("confirmPassword")} type="password" className={inputClass}
+                                                 placeholder="••••••"/>
                     </label>
                     {errors.confirmPassword && <p className={errorClass}>{errors.confirmPassword.message}</p>}
                 </div>

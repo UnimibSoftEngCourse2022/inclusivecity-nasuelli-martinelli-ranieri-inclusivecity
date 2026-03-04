@@ -1,5 +1,5 @@
 import {type BarrierType, PrismaClient} from '@prisma/client';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 const prisma = new PrismaClient();
 

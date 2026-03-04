@@ -8,7 +8,7 @@ export function useTheme() {
 
         const updateTheme = () => {
             const saved = localStorage.getItem("theme");
-            const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            const systemDark = globalThis.matchMedia("(prefers-color-scheme: dark)").matches;
 
             const isDark = saved === "dark" || (!saved && systemDark);
 
@@ -23,7 +23,7 @@ export function useTheme() {
 
         updateTheme();
 
-        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        const mediaQuery = globalThis.matchMedia("(prefers-color-scheme: dark)");
 
         const handleChange = () => {
             if (!localStorage.getItem("theme")) {

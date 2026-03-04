@@ -15,16 +15,19 @@ const firebaseConfig = {
     measurementId: env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-let analytics: Analytics | null = null;
-if (typeof window !== "undefined") {
-    isAnalyticsSupported().then((supported) => {
+const initializeAnalytics = async (): Promise<Analytics | null> => {
+    if (globalThis.window !== undefined) {
+        const supported = await isAnalyticsSupported();
         if (supported) {
-            analytics = getAnalytics(app);
+            return getAnalytics(app);
         }
-    });
-}
+    }
+    return null;
+};
+
+export const analytics = await initializeAnalytics();
 
 export async function requestNotificationPermission(): Promise<string | null> {
     try {
@@ -64,5 +67,3 @@ export async function requestNotificationPermission(): Promise<string | null> {
         return null;
     }
 }
-
-export {app, analytics};

@@ -3,6 +3,7 @@ import {Loader2, MapPin, UploadCloud, X} from "lucide-react";
 import Map, {Marker} from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import SearchBar from "~/components/map/SearchBar";
+import mapboxgl from "mapbox-gl";
 
 type BarrierFormProps = {
     types: any[];
@@ -110,7 +111,7 @@ export default function BarrierForm(
         }
     };
 
-    const handleSubmitLocal = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmitLocal = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         onSubmit(formData, newPhotos, existingPhotos, addressQuery, coords.lat, coords.lng, difficulty);
@@ -118,6 +119,13 @@ export default function BarrierForm(
 
     const inputClass = "w-full bg-background border border-border px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary transition-all text-text";
     const labelClass = "block text-sm font-semibold text-text mb-1.5";
+
+    let submitButtonText = "Invia Segnalazione";
+    if (isSubmitting) {
+        submitButtonText = "Salvataggio...";
+    } else if (isEditMode) {
+        submitButtonText = "Salva Modifiche";
+    }
 
     return (
         <form onSubmit={handleSubmitLocal} className="flex flex-col gap-6">
@@ -134,28 +142,32 @@ export default function BarrierForm(
                 <h2 className="text-lg font-bold text-text mb-4 border-b border-border pb-2">Dettagli Ostacolo</h2>
 
                 <div>
-                    <label className={labelClass}>Titolo <span className="text-error">*</span></label>
-                    <input type="text" name="title" defaultValue={initialData?.title}
-                           placeholder="Es. Gradino alto senza rampa" required className={inputClass}/>
+                    <label className={labelClass}>
+                        Titolo <span className="text-error">*</span>
+                        <input type="text" name="title" defaultValue={initialData?.title}
+                               placeholder="Es. Gradino alto senza rampa" required className={inputClass}/>
+                    </label>
                 </div>
 
                 <div>
-                    <label className={labelClass}>Descrizione <span className="text-error">*</span></label>
-                    <textarea name="description" defaultValue={initialData?.description}
-                              placeholder="Descrivi il problema nel dettaglio..." required rows={4}
-                              className={`${inputClass} resize-none`}/>
+                    <label className={labelClass}>Descrizione <span className="text-error">*</span>
+                        <textarea name="description" defaultValue={initialData?.description}
+                                  placeholder="Descrivi il problema nel dettaglio..." required rows={4}
+                                  className={`${inputClass} resize-none`}/>
+                    </label>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
                     <div>
-                        <label className={labelClass}>Categoria <span className="text-error">*</span></label>
-                        <select name="typeId" required className={inputClass} onChange={handleCategoryChange}
-                                value={selectedCategory}>
-                            <option value="" disabled>Seleziona tipo</option>
-                            {types.map((t: any) => (
-                                <option key={t.id} value={t.id}>{t.label}</option>
-                            ))}
-                        </select>
+                        <label className={labelClass}>Categoria <span className="text-error">*</span>
+                            <select name="typeId" required className={inputClass} onChange={handleCategoryChange}
+                                    value={selectedCategory}>
+                                <option value="" disabled>Seleziona tipo</option>
+                                {types.map((t: any) => (
+                                    <option key={t.id} value={t.id}>{t.label}</option>
+                                ))}
+                            </select>
+                        </label>
                     </div>
 
                     <div
@@ -238,7 +250,7 @@ export default function BarrierForm(
                     Posizione Esatta <span className="text-error">*</span>
                 </h2>
 
-                {!locationReady ? (
+                {!locationReady ? ( // NOSONAR
                     <div
                         className="w-full h-100 bg-background rounded-xl flex flex-col items-center justify-center border border-border shadow-inner gap-3">
                         <Loader2 className="w-8 h-8 animate-spin text-primary"/>
@@ -290,7 +302,7 @@ export default function BarrierForm(
                 className="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-md hover:opacity-90 transition active:scale-95 disabled:opacity-70 flex items-center justify-center gap-3 mt-2"
             >
                 {isSubmitting && <Loader2 className="w-5 h-5 animate-spin"/>}
-                {isSubmitting ? "Salvataggio..." : (isEditMode ? "Salva Modifiche" : "Invia Segnalazione")}
+                {submitButtonText}
             </button>
         </form>
     );

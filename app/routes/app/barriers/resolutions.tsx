@@ -83,15 +83,22 @@ export default function ResolutionsListPage() {
 
     // Aggiunta Items (Infinite Scroll)
     useEffect(() => {
-        if (fetcher.data && fetcher.state === "idle" && fetcher.data.page > activePage) {
-            if (fetcher.data.q === q) {
-                setItems((prev) => {
-                    const newItems = fetcher.data!.resolutions.filter(r => !prev.some(p => p.id === r.id));
-                    return [...prev, ...newItems];
-                });
-                setActivePage(fetcher.data.page);
-            }
+        if (!fetcher.data || fetcher.state !== "idle" || fetcher.data.page <= activePage || fetcher.data.q !== q) {
+            return;
         }
+
+        const fetchedResolutions = fetcher.data.resolutions;
+        const nextPage = fetcher.data.page;
+
+        setItems((prev) => {
+            const existingIds = new Set(prev.map(item => item.id));
+
+            const newItems = fetchedResolutions.filter(item => !existingIds.has(item.id));
+
+            return [...prev, ...newItems];
+        });
+
+        setActivePage(nextPage);
     }, [fetcher.data, fetcher.state, activePage, q]);
 
     // Observer Infinite Scroll

@@ -178,6 +178,21 @@ export default function MapPage() {
         calculateRoute(lng, lat, placeName, barriers, userBaseDifficulty);
     };
 
+    let routeStatusContent = null;
+    if (isLoadingRoute) {
+        routeStatusContent = (
+            <p className="text-sm text-text-muted animate-pulse">
+                Ricerca percorso accessibile in corso...
+            </p>
+        );
+    } else if (route) {
+        routeStatusContent = (
+            <p className="text-sm text-primary font-medium">
+                {Math.round(route.duration / 60)} min ({Math.round(route.distance)} metri)
+            </p>
+        );
+    }
+
     if (isLocating) return <Loading/>;
 
     return (
@@ -259,14 +274,7 @@ export default function MapPage() {
                             <h3 className="font-bold text-lg text-text">
                                 {destination?.name || "Destinazione selezionata"}
                             </h3>
-                            {isLoadingRoute ? (
-                                <p className="text-sm text-text-muted animate-pulse">Ricerca percorso accessibile in
-                                    corso...</p>
-                            ) : route ? (
-                                <p className="text-sm text-primary font-medium">
-                                    {Math.round(route.duration / 60)} min ({Math.round(route.distance)} metri)
-                                </p>
-                            ) : null}
+                            {routeStatusContent}
                         </div>
                         <button onClick={cancelNavigation}
                                 className="p-2 bg-background rounded-full text-text-muted hover:text-text">
@@ -310,7 +318,7 @@ export default function MapPage() {
             {/* OVERLAY MENU FILTRI */}
             <div
                 className={`absolute inset-0 z-50 flex justify-end transition-opacity duration-300 ${isFilterOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
-                <div className="absolute inset-0 bg-text/20 backdrop-blur-sm" onClick={closeFilterMenu}/>
+                <button className="absolute inset-0 bg-text/20 backdrop-blur-sm" onClick={closeFilterMenu}/>
 
                 <div
                     className={`relative w-full max-w-sm bg-surface h-full shadow-2xl flex flex-col transform transition-transform duration-300 ${isFilterOpen ? "translate-x-0" : "translate-x-full"}`}>

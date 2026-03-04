@@ -1,4 +1,4 @@
-import {createContext, useContext, useEffect, useState} from "react";
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from "react";
 import type {Session, User} from "@supabase/supabase-js";
 import {supabase} from "~/services/supabase/supabase";
 import type {User as UserProfile} from "@prisma/client";
@@ -14,11 +14,28 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({children}: { children: React.ReactNode }) {
+export function AuthProvider({children}: Readonly<{ children: React.ReactNode }>) {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const fetchProfile = useCallback(async (userId: string) => {
+        try {
+            const {data, error} = await supabase
+                .from("User")
+                .select("*")
+                .eq("id", userId)
+                .maybeSingle();
+
+            if (error) throw error;
+            if (data) setProfile(data as UserProfile);
+        } catch (error) {
+            console.error("Errore recupero profilo:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         let mounted = true;
@@ -65,40 +82,32 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
             mounted = false;
             subscription.unsubscribe();
         };
-    }, []);
+    }, [fetchProfile]);
 
-    async function fetchProfile(userId: string) {
-        try {
-            const {data, error} = await supabase
-                .from("User")
-                .select("*")
-                .eq("id", userId)
-                .maybeSingle();
-
-            if (error) throw error;
-            if (data) setProfile(data as UserProfile);
-        } catch (error) {
-            console.error("Errore recupero profilo:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    const signOut = async () => {
+    const signOut = useCallback(async () => {
         await supabase.auth.signOut();
         setProfile(null);
         setUser(null);
         setSession(null);
-    };
+    }, []);
 
-    const refreshProfile = async () => {
+    const refreshProfile = useCallback(async () => {
         if (user) {
             await fetchProfile(user.id);
         }
-    };
+    }, [user, fetchProfile]);
+
+    const value = useMemo(() => ({
+        session,
+        user,
+        profile,
+        loading,
+        signOut,
+        refreshProfile
+    }), [session, user, profile, loading, signOut, refreshProfile]);
 
     return (
-        <AuthContext.Provider value={{session, user, profile, loading, signOut, refreshProfile}}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

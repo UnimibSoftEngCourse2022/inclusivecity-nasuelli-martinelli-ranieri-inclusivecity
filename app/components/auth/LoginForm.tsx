@@ -72,27 +72,29 @@ export default function LoginForm() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {/* Email */}
                 <div>
-                    <label className={labelClass}>Email</label>
-                    <input
+                    <label className={labelClass}>
+                        Email <input
                         {...register("email")}
                         type="email"
                         className={inputClass}
                         placeholder="nome@esempio.com"
                         autoComplete="username"
                     />
+                    </label>
                     {errors.email && <p className={errorClass}>{errors.email.message}</p>}
                 </div>
 
                 {/* Password */}
                 <div>
-                    <label className={labelClass}>Password</label>
-                    <input
+                    <label className={labelClass}>
+                        Password <input
                         {...register("password")}
                         type="password"
                         className={inputClass}
                         placeholder="••••••"
                         autoComplete="current-password"
                     />
+                    </label>
                     {errors.password && <p className={errorClass}>{errors.password.message}</p>}
                 </div>
 
@@ -107,7 +109,7 @@ export default function LoginForm() {
             </form>
 
             {/* Google Login */}
-            <SocialLogin />
+            <SocialLogin/>
         </div>
     );
 }

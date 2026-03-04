@@ -13,7 +13,7 @@ export default function SocialLogin() {
                 provider: "google",
                 options: {
                     // Reindirizza alla pagina corrente dopo l'auth
-                    redirectTo: `${window.location.origin}/auth/callback`,
+                    redirectTo: `${globalThis.location.origin}/auth/callback`,
                 },
             });
 
