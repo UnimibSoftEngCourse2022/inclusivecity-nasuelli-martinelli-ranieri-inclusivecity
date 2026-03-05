@@ -134,6 +134,10 @@ export default function BarrierForm(
         }
     };
 
+    const preventEnterSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') e.preventDefault();
+    };
+
     const handleSubmitLocal = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
@@ -160,7 +164,7 @@ export default function BarrierForm(
                 </div>
             )}
 
-            {/* DETTAGLI E INDIRIZZO */}
+            {/* SEZIONE 1: DETTAGLI */}
             <section className="bg-surface p-5 rounded-2xl border border-border shadow-sm space-y-4">
                 <h2 className="text-lg font-bold text-text mb-4 border-b border-border pb-2">Dettagli Ostacolo</h2>
 
@@ -168,31 +172,9 @@ export default function BarrierForm(
                     <label className={labelClass}>
                         Titolo <span className="text-error">*</span>
                         <input type="text" name="title" defaultValue={initialData?.title}
-                               placeholder="Es. Gradino alto senza rampa" required className={inputClass}/>
+                               placeholder="Es. Gradino alto senza rampa" required className={inputClass}
+                               onKeyDown={preventEnterSubmit}/>
                     </label>
-                </div>
-
-                <div>
-                    <label className={labelClass}>
-                        Indirizzo <span className="text-error">*</span>
-                        <input
-                            type="text"
-                            value={addressQuery}
-                            onChange={(e) => setAddressQuery(e.target.value)}
-                            placeholder="Tocca la mappa o inserisci a mano..."
-                            required
-                            className={inputClass}
-                            readOnly={isReversing}
-                        />
-                    </label>
-                    {isReversing ? (
-                        <p className="text-xs text-primary mt-1 flex items-center gap-1 animate-pulse">
-                            <Loader2 className="w-3 h-3 animate-spin"/> Calcolo indirizzo in corso...
-                        </p>
-                    ) : (
-                        <p className="text-xs text-text-muted mt-1">Puoi modificare questo testo o cliccare sulla mappa
-                            per aggiornarlo.</p>
-                    )}
                 </div>
 
                 <div>
@@ -241,7 +223,7 @@ export default function BarrierForm(
                 </div>
             </section>
 
-            {/* CARD 2: FOTO */}
+            {/* SEZIONE 2: FOTO */}
             <section className="bg-surface p-5 rounded-2xl border border-border shadow-sm space-y-4">
                 <h2 className="text-lg font-bold text-text mb-4 border-b border-border pb-2">Documentazione Visiva</h2>
 
@@ -288,15 +270,38 @@ export default function BarrierForm(
                 </div>
             </section>
 
-            {/* CARD 3: MAPPA */}
-            <section className="bg-surface p-5 rounded-2xl border border-border shadow-sm space-y-4">
-                <h2 className="text-lg font-bold text-text mb-2 border-b border-border pb-2 flex items-center gap-2">
+            {/* SEZIONE 3: MAPPA E INDIRIZZO */}
+            <section className="bg-surface p-5 rounded-2xl border border-border shadow-sm space-y-5">
+                <h2 className="text-lg font-bold text-text border-b border-border pb-2 flex items-center gap-2">
                     Posizione Esatta <span className="text-error">*</span>
                 </h2>
 
+                <div>
+                    <label className={labelClass}>
+                        Indirizzo o Luogo <input
+                        type="text"
+                        value={addressQuery}
+                        onChange={(e) => setAddressQuery(e.target.value)}
+                        onKeyDown={preventEnterSubmit}
+                        placeholder="Cerca sulla mappa o inserisci a mano..."
+                        required
+                        className={inputClass}
+                        readOnly={isReversing}
+                    />
+                    </label>
+                    {isReversing ? (
+                        <p className="text-xs text-primary mt-1.5 flex items-center gap-1.5 animate-pulse font-medium">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin"/> Calcolo indirizzo in corso...
+                        </p>
+                    ) : (
+                        <p className="text-xs text-text-muted mt-1.5">Usa la mappa qui sotto per posizionare il marker
+                            con precisione.</p>
+                    )}
+                </div>
+
                 {locationReady ? (
                     <div
-                        className="relative w-full h-100 rounded-xl border border-border overflow-hidden shadow-inner">
+                        className="relative w-full h-[300px] rounded-xl border border-border overflow-hidden shadow-inner">
                         <div className="absolute top-3 left-3 right-3 z-10">
                             <SearchBar mapboxToken={mapboxToken} onSelect={handleLocationSelect}/>
                         </div>
@@ -332,7 +337,7 @@ export default function BarrierForm(
                     </div>
                 ) : (
                     <div
-                        className="w-full h-100 bg-background rounded-xl flex flex-col items-center justify-center border border-border shadow-inner gap-3">
+                        className="w-full h-75 bg-background rounded-xl flex flex-col items-center justify-center border border-border shadow-inner gap-3">
                         <Loader2 className="w-8 h-8 animate-spin text-primary"/>
                         <span className="text-sm font-medium text-text-muted">Ricerca posizione GPS...</span>
                     </div>
