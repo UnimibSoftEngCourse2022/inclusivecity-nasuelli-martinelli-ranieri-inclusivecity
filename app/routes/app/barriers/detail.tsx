@@ -108,10 +108,13 @@ export default function BarrierDetailPage() {
     const isAdmin = profile?.role === "ADMIN";
     const isOwner = profile?.id === barrier.userId;
     const canEdit = isOwner || isAdmin;
-    const isResolved = barrier.state === "RESOLVED";
+
+    // LOGICA DI STATO
+    const canInteract = barrier.state !== "RESOLVED" && barrier.state !== "HIDDEN";
 
     const hasMyFeedback = barrier.feedbacks.some(f => f.userId === profile?.id);
-    const showFeedbackForm = !isOwner && !hasMyFeedback;
+    const showFeedbackForm = !isOwner && !hasMyFeedback && canInteract;
+    const showReportForm = profile && !isOwner && canInteract;
 
     const hasProposedResolution = profile ? barrier.resolutions.some(r => r.userId === profile.id) : false;
 
@@ -126,18 +129,18 @@ export default function BarrierDetailPage() {
     const IconComponent = getDynamicIcon(barrier.type?.iconKey);
 
     return (
-        <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-20 animate-in fade-in duration-300">
+        <div className="w-full p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-20 animate-in fade-in duration-300">
 
             <div className="flex items-center gap-4">
                 <button onClick={() => navigate(-1)}
-                        className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm">
+                        className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm shrink-0">
                     <ArrowLeft className="w-5 h-5 text-text"/>
                 </button>
-                <div>
-                    <h1 className="text-2xl font-bold text-text">{barrier.title}</h1>
-                    <p className="text-sm text-text-muted mt-1 flex items-center gap-1.5">
+                <div className="min-w-0">
+                    <h1 className="text-2xl font-bold text-text truncate">{barrier.title}</h1>
+                    <p className="text-sm text-text-muted mt-1 flex items-center gap-1.5 truncate">
                         <MapPin className="w-4 h-4 shrink-0"/>
-                        {barrier.address || "Indirizzo non specificato"}
+                        <span className="truncate">{barrier.address || "Indirizzo non specificato"}</span>
                     </p>
                 </div>
             </div>
@@ -158,21 +161,24 @@ export default function BarrierDetailPage() {
                     </div>
 
                     <div className="bg-surface p-5 rounded-3xl border border-border shadow-sm text-sm">
-                        <div className="flex justify-between mb-2 pb-2 border-b border-border/50"><span
-                            className="text-text-muted">Segnalato da</span><span
-                            className="font-bold">{barrier.creator?.firstName}</span></div>
-                        <div className="flex justify-between"><span className="text-text-muted">In data</span><span
-                            className="font-bold">{formatDate(barrier.createdAt)}</span></div>
+                        <div className="flex justify-between mb-2 pb-2 border-b border-border/50">
+                            <span className="text-text-muted">Segnalato da</span>
+                            <span className="font-bold">{barrier.creator?.firstName}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-text-muted">In data</span>
+                            <span className="font-bold">{formatDate(barrier.createdAt)}</span>
+                        </div>
                     </div>
 
-                    {!isResolved && !hasProposedResolution && (
+                    {canInteract && !hasProposedResolution && (
                         <Link to={`/app/barriers/${barrier.id}/resolve`}
                               className="w-full flex items-center justify-center gap-2 bg-success text-white py-3.5 rounded-2xl font-bold shadow-md hover:bg-success/90 transition active:scale-95">
                             <Camera className="w-5 h-5"/> Proponi Risoluzione
                         </Link>
                     )}
 
-                    {!isResolved && hasProposedResolution && (
+                    {canInteract && hasProposedResolution && (
                         <div
                             className="w-full flex items-center justify-center gap-2 bg-success/10 text-success border border-success/20 py-3.5 rounded-2xl font-bold shadow-sm">
                             <CheckCircle className="w-5 h-5"/> Risoluzione Inviata
@@ -185,8 +191,8 @@ export default function BarrierDetailPage() {
                         <div className="flex flex-wrap gap-3">
                             <div
                                 className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl border border-primary/20">
-                                <IconComponent className="w-5 h-5"/><span
-                                className="text-sm font-bold">{barrier.type?.label}</span>
+                                <IconComponent className="w-5 h-5"/>
+                                <span className="text-sm font-bold">{barrier.type?.label}</span>
                             </div>
                             <div
                                 className="flex items-center gap-2 bg-error/10 text-error px-4 py-2 rounded-xl border border-error/20">
@@ -236,28 +242,36 @@ export default function BarrierDetailPage() {
                                 className="text-sm font-bold bg-warning/10 text-warning px-3 py-1 rounded-full">{Number(barrier.averageRating).toFixed(1)} / 5</span>}
                         </div>
 
+                        {/* FORM FEEDBACK */}
                         {showFeedbackForm && profile && (
                             <fetcher.Form method="post"
-                                          className="space-y-4 bg-background p-5 rounded-2xl border border-border">
+                                          className="flex flex-col gap-4 bg-surface p-5 sm:p-6 rounded-2xl border-2 border-primary/20 shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
+                                <div className="relative z-10 flex flex-col gap-4 pl-2">
+
+                                    <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+                                        <h4 className="text-base font-extrabold text-primary mb-1">Lascia una
+                                            valutazione</h4>
+                                        <p className="text-xs text-text-muted mb-4">Quanto è accurata questa
+                                            segnalazione? Il tuo voto aiuterà la community.</p>
+                                        <StarRating rating={rating} onChange={setRating}
+                                                    disabled={fetcher.state !== "idle"}/>
+                                    </div>
+
+                                    <textarea name="comment" rows={3}
+                                              placeholder="Racconta la tua esperienza qui (opzionale)..."
+                                              className="w-full bg-background border border-border px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary resize-none text-sm shadow-inner transition-shadow"/>
+
+                                    <div className="flex justify-end mt-1">
+                                        <button type="submit" disabled={fetcher.state !== "idle" || rating === 0}
+                                                className="w-full sm:w-auto bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-all active:scale-95">
+                                            {fetcher.state === "idle" ? "Pubblica Valutazione" : "Invio in corso..."}
+                                        </button>
+                                    </div>
+                                </div>
                                 <input type="hidden" name="intent" value="feedback"/>
                                 <input type="hidden" name="userId" value={profile.id}/>
                                 <input type="hidden" name="rating" value={rating}/>
-
-                                <div className="flex flex-col items-center sm:items-start">
-                                    <label className="block text-sm font-bold text-text mb-2">
-                                        Quanto è accurata questa segnalazione?
-                                        <StarRating rating={rating} onChange={setRating}
-                                                    disabled={fetcher.state !== "idle"}/>
-                                    </label>
-                                </div>
-
-                                <textarea name="comment" rows={3} placeholder="Aggiungi dettagli (opzionale)..."
-                                          className="w-full bg-surface border border-border px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary resize-none mt-2 text-sm"/>
-
-                                <button type="submit" disabled={fetcher.state !== "idle" || rating === 0}
-                                        className="w-full sm:w-auto bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 disabled:opacity-50 transition-opacity">
-                                    {fetcher.state === "idle" ? "Pubblica Valutazione" : "Invio in corso..."}
-                                </button>
                             </fetcher.Form>
                         )}
 
@@ -285,7 +299,7 @@ export default function BarrierDetailPage() {
                         )}
                     </div>
 
-                    {profile && !isOwner && (
+                    {showReportForm && (
                         <details
                             className="group bg-surface rounded-3xl border border-border shadow-sm overflow-hidden">
                             <summary

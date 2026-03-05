@@ -16,7 +16,9 @@ export async function loader({params}: LoaderFunctionArgs) {
     });
 
     if (!barrier) throw new Response("Barriera non trovata", {status: 404});
-    if (barrier.state === 'RESOLVED') throw new Response("Barriera già risolta", {status: 400});
+    if (barrier.state === 'RESOLVED' || barrier.state === 'HIDDEN') {
+        throw new Response("Non puoi proporre una risoluzione per questa barriera", {status: 400});
+    }
 
     return {barrier};
 }
