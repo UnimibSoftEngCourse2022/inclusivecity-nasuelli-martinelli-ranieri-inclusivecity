@@ -74,7 +74,7 @@ export default function AdminResolutionsPage() {
     return (
         <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-24 animate-in fade-in">
             <header>
-                <h1 className="text-2xl font-bold text-text">Risoluzioni</h1>
+                <h1 className="text-2xl font-bold text-text">Risolutions</h1>
                 <p className="text-sm text-text-muted mt-1">
                     Approva o rifiuta le prove fotografiche caricate dagli utenti relative alle barriere che credono risolte.
                 </p>
