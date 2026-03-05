@@ -113,10 +113,10 @@ export default function NewBarrier() {
     };
 
     return (
-        <div className="p-4 md:p-6 max-w-3xl mx-auto flex flex-col gap-6 animate-in fade-in duration-300 pb-20">
-            <header>
-                <h1 className="text-2xl font-bold text-text">Segnala una barriera</h1>
-                <p className="text-sm text-text-muted mt-1">Aiuta la community mappando un nuovo ostacolo.</p>
+        <div className="w-full p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
+            <header className="w-full min-w-0">
+                <h1 className="text-2xl font-bold text-text truncate">Segnala una barriera</h1>
+                <p className="text-sm text-text-muted mt-1 truncate">Aiuta la community mappando un nuovo ostacolo.</p>
             </header>
 
             <BarrierForm

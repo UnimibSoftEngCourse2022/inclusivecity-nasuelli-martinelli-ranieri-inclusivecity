@@ -73,9 +73,7 @@ export async function action({request, params}: ActionFunctionArgs) {
                 address     = ${data.address},
                 "photoUrls" = CAST(${data.photoUrls} AS text[]),
                 difficulty  = ${data.difficulty}::integer,
-                location = ST_SetSRID(ST_MakePoint(${data.lng}:: float, ${data.lat}:: float), 4326), 
-                "typeId" = ${data.typeId},
-                "updatedAt" = NOW()
+                location = ST_SetSRID(ST_MakePoint(${data.lng}:: float, ${data.lat}:: float), 4326), "typeId" = ${data.typeId}, "updatedAt" = NOW()
             WHERE id = ${barrierId}
         `;
 
@@ -101,7 +99,7 @@ export default function EditBarrierPage() {
     // Blocco permessi
     if (profile && profile.id !== barrier.userId && profile.role !== "ADMIN") {
         return (
-            <div className="p-6 max-w-xl mx-auto text-center mt-20 space-y-4">
+            <div className="w-full p-6 max-w-xl mx-auto text-center mt-20 space-y-4">
                 <ShieldAlert className="w-16 h-16 text-error mx-auto opacity-80"/>
                 <h1 className="text-2xl font-bold text-text">Accesso Negato</h1>
                 <p className="text-text-muted">Non hai i permessi per modificare questa barriera perché non ne sei il
@@ -160,15 +158,15 @@ export default function EditBarrierPage() {
     };
 
     return (
-        <div className="p-4 md:p-6 max-w-3xl mx-auto flex flex-col gap-6 animate-in fade-in duration-300 pb-20">
-            <header className="flex items-center gap-4">
+        <div className="w-full p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
+            <header className="w-full flex items-center gap-4">
                 <Link to={`/app/barriers/${barrier.id}`}
-                      className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm">
+                      className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm shrink-0">
                     <ArrowLeft className="w-5 h-5 text-text"/>
                 </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-text">Modifica Barriera</h1>
-                    <p className="text-sm text-text-muted mt-1">Aggiorna i dettagli della tua segnalazione.</p>
+                <div className="min-w-0">
+                    <h1 className="text-2xl font-bold text-text truncate">Modifica Barriera</h1>
+                    <p className="text-sm text-text-muted mt-1 truncate">Aggiorna i dettagli della tua segnalazione.</p>
                 </div>
             </header>
 

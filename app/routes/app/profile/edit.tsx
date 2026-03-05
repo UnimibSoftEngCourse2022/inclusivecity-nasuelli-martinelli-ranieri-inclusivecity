@@ -155,7 +155,7 @@ export default function EditProfilePage() {
     const initials = `${profile?.firstName?.[0] || ""}${profile?.lastName?.[0] || ""}`.toUpperCase();
 
     return (
-        <div className="w-full max-w-5xl mx-auto p-4 md:p-8 pb-24 animate-in fade-in duration-300">
+        <div className="w-full p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
 
             <header className="flex items-center gap-4 mb-6">
                 <Link to="/app/profile"

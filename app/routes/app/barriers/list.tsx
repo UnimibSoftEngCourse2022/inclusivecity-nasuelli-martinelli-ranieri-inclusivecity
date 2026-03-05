@@ -149,7 +149,7 @@ export default function BarrierListPage() {
     const isNavigating = navigation.state === "loading" || navigation.state === "submitting";
 
     return (
-        <div className="w-full max-w-5xl mx-auto p-4 md:p-6 space-y-6 pb-24 animate-in fade-in duration-300">
+        <div className="w-full p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
 
             {/* HEADER E TASTO NUOVA */}
             <div className="w-full flex items-center justify-between gap-4">
