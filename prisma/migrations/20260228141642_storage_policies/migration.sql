@@ -1,3 +1,14 @@
+-- MOCK SCHEMA STORAGE (Necessario per lo shadow database di Prisma)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'storage') THEN
+        EXECUTE 'CREATE SCHEMA storage';
+END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'storage' AND tablename = 'objects') THEN
+        EXECUTE 'CREATE TABLE storage.objects (id uuid NOT NULL PRIMARY KEY, bucket_id text, name text, owner uuid)';
+END IF;
+END $$;
+
 DROP POLICY IF EXISTS "Public Read Buckets" ON storage.objects;
 DROP POLICY IF EXISTS "Insert own profile picture" ON storage.objects;
 DROP POLICY IF EXISTS "Update own profile picture" ON storage.objects;
