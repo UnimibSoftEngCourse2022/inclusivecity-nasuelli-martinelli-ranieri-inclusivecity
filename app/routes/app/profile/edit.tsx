@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import type {ActionFunctionArgs} from "react-router";
 import {Form, Link, redirect, useActionData, useNavigation as useReactNavigation, useSubmit} from "react-router";
-import {supabase} from "~/services/supabase/supabase";
+import {supabase} from "~/services/supabase";
 import {useAuth} from "~/context/AuthContext";
 import {prisma} from "~/db.server";
 import {ArrowLeft, Camera, CheckCircle, Loader2, Lock, Save} from "lucide-react";

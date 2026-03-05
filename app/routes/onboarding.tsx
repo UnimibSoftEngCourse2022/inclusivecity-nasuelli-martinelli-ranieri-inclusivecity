@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {Navigate, useNavigate} from "react-router";
-import {supabase} from "~/services/supabase/supabase";
+import {supabase} from "~/services/supabase";
 import {useAuth} from "~/context/AuthContext";
 import type {Route} from "./+types/onboarding";
 import Loading from "~/components/Loading";

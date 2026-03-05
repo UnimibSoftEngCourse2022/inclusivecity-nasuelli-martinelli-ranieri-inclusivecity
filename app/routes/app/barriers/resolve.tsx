@@ -3,7 +3,7 @@ import type {LoaderFunctionArgs} from "react-router";
 import {redirect, useLoaderData, useNavigation as useReactNavigation, useSubmit} from "react-router";
 import {prisma} from "~/db.server";
 import {useAuth} from "~/context/AuthContext";
-import {supabase} from "~/services/supabase/supabase";
+import {supabase} from "~/services/supabase";
 import {ArrowLeft, Loader2, UploadCloud, X} from "lucide-react";
 
 export async function loader({params}: LoaderFunctionArgs) {

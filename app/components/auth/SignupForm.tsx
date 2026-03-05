@@ -5,7 +5,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {useNavigate} from "react-router";
-import {supabase} from "~/services/supabase/supabase";
+import {supabase} from "~/services/supabase";
 import SocialLogin from "~/components/auth/SocialLogin";
 
 const signUpSchema = z

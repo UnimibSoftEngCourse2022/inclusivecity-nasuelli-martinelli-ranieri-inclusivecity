@@ -1,4 +1,4 @@
-import {supabase} from "~/services/supabase/supabase";
+import {supabase} from "~/services/supabase";
 
 export async function uploadBarrierPhotos(files: File[]): Promise<string[]> {
     const uploadedUrls: string[] = [];

@@ -1,6 +1,6 @@
 import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from "react";
 import type {Session, User} from "@supabase/supabase-js";
-import {supabase} from "~/services/supabase/supabase";
+import {supabase} from "~/services/supabase";
 import type {User as UserProfile} from "@prisma/client";
 
 type AuthContextType = {

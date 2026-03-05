@@ -1,7 +1,7 @@
 import {useCallback, useEffect, useState} from "react";
 import {useAuth} from "~/context/AuthContext";
 import {requestNotificationPermission} from "~/services/firebase";
-import {supabase} from "~/services/supabase/supabase";
+import {supabase} from "~/services/supabase";
 
 export function usePushNotifications() {
     const {user} = useAuth();
