@@ -87,6 +87,13 @@ html, body {
     }
 }
 
+/* --- OVERRIDE MAPBOX (Migliora il Touch) --- */
+.mapboxgl-canvas {
+    -webkit-touch-callout: none !important; /* Blocca il menu popup di iOS al long-press */
+    -webkit-user-select: none !important; /* Blocca la selezione accidentale del testo */
+    user-select: none !important;
+}
+
 /* --- OVERRIDE MAPBOX POPUP (Tema InclusiveCity) --- */
 .mapboxgl-popup-content {
     background: var(--surface) !important;

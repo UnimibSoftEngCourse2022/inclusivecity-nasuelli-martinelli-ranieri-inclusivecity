@@ -165,10 +165,35 @@ export default function MapPage() {
         handleMoveEnd();
     };
 
-    const handleMapContextMenu = (e: mapboxgl.MapLayerMouseEvent) => {
+    const handleMapContextMenu = async (e: mapboxgl.MapLayerMouseEvent) => {
         if (navState !== "IDLE") return;
         e.preventDefault();
-        calculateRoute(e.lngLat.lng, e.lngLat.lat, "Destinazione su Mappa", barriers, userBaseDifficulty);
+
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+            navigator.vibrate(50);
+        }
+
+        let placeName = "Destinazione su Mappa";
+
+        try {
+            const baseUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${e.lngLat.lng},${e.lngLat.lat}.json`;
+            const params = new URLSearchParams({
+                access_token: mapboxToken,
+                limit: "1",
+                country: "it"
+            });
+
+            const res = await fetch(`${baseUrl}?${params.toString()}`);
+            const data = await res.json();
+
+            if (data.features && data.features.length > 0) {
+                placeName = data.features[0].place_name;
+            }
+        } catch (err) {
+            console.error("Errore durante il recupero dell'indirizzo", err);
+        }
+
+        calculateRoute(e.lngLat.lng, e.lngLat.lat, placeName, barriers, userBaseDifficulty);
     };
 
     const handleLocationSelect = (lng: number, lat: number, placeName?: string) => {

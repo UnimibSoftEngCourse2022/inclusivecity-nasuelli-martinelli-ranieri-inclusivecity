@@ -14,14 +14,3 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage((payload) => {
-    console.log('Ricevuto messaggio in background: ', payload);
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
-        body: payload.notification.body,
-        icon: '/icons/apple-icon-180.png'
-    };
-
-    globalThis.registration.showNotification(notificationTitle, notificationOptions);
-});

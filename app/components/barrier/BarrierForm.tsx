@@ -8,7 +8,7 @@ import mapboxgl from "mapbox-gl";
 type BarrierFormProps = {
     types: any[];
     mapboxToken: string;
-    initialData?: any; // Se presente, il form si adatta alla modalità "Modifica"
+    initialData?: any;
     isSubmitting: boolean;
     clientError: string | null;
     onSubmit: (formData: FormData, newPhotos: File[], existingPhotos: string[], address: string, lat: number | null, lng: number | null, difficulty: number) => void;
@@ -41,13 +41,13 @@ export default function BarrierForm(
 
     // --- STATI MAPPA ---
     const [locationReady, setLocationReady] = useState(isEditMode);
+    const [isReversing, setIsReversing] = useState(false);
     const [viewState, setViewState] = useState({
         longitude: initialData?.lng || 12.4964,
         latitude: initialData?.lat || 41.9028,
         zoom: isEditMode ? 16 : 14
     });
 
-    // Geolocalizzazione (solo se è una nuova barriera)
     useEffect(() => {
         if (!isEditMode && "geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
@@ -64,12 +64,10 @@ export default function BarrierForm(
         }
     }, [isEditMode]);
 
-    // Pulizia memory leak
     useEffect(() => {
         return () => newPhotoPreviews.forEach(URL.revokeObjectURL);
     }, [newPhotoPreviews]);
 
-    // --- GESTORI EVENTI ---
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const addedFiles = Array.from(e.target.files);
@@ -97,8 +95,34 @@ export default function BarrierForm(
         if (placeName) setAddressQuery(placeName);
     };
 
-    const handleMapClick = (e: mapboxgl.MapLayerMouseEvent) => {
-        setCoords({lat: e.lngLat.lat, lng: e.lngLat.lng});
+    const handleMapClick = async (e: mapboxgl.MapLayerMouseEvent) => {
+        const lat = e.lngLat.lat;
+        const lng = e.lngLat.lng;
+        setCoords({lat, lng});
+        setIsReversing(true);
+
+        try {
+            const baseUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json`;
+            const params = new URLSearchParams({
+                access_token: mapboxToken,
+                limit: "1",
+                country: "it"
+            });
+            const url = `${baseUrl}?${params.toString()}`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data.features && data.features.length > 0) {
+                setAddressQuery(data.features[0].place_name);
+            } else {
+                setAddressQuery(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+            }
+        } catch {
+            setAddressQuery(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        } finally {
+            setIsReversing(false);
+        }
     };
 
     const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -106,7 +130,6 @@ export default function BarrierForm(
         setSelectedCategory(val);
         const selectedType = types.find((t: any) => t.id === val);
         if (selectedType && !isEditMode) {
-            // Aggiorna lo slider in automatico solo se stiamo creando una barriera nuova
             setDifficulty(selectedType.defaultDifficulty);
         }
     };
@@ -137,7 +160,7 @@ export default function BarrierForm(
                 </div>
             )}
 
-            {/* DETTAGLI */}
+            {/* DETTAGLI E INDIRIZZO */}
             <section className="bg-surface p-5 rounded-2xl border border-border shadow-sm space-y-4">
                 <h2 className="text-lg font-bold text-text mb-4 border-b border-border pb-2">Dettagli Ostacolo</h2>
 
@@ -147,6 +170,29 @@ export default function BarrierForm(
                         <input type="text" name="title" defaultValue={initialData?.title}
                                placeholder="Es. Gradino alto senza rampa" required className={inputClass}/>
                     </label>
+                </div>
+
+                <div>
+                    <label className={labelClass}>
+                        Indirizzo <span className="text-error">*</span>
+                        <input
+                            type="text"
+                            value={addressQuery}
+                            onChange={(e) => setAddressQuery(e.target.value)}
+                            placeholder="Tocca la mappa o inserisci a mano..."
+                            required
+                            className={inputClass}
+                            readOnly={isReversing}
+                        />
+                    </label>
+                    {isReversing ? (
+                        <p className="text-xs text-primary mt-1 flex items-center gap-1 animate-pulse">
+                            <Loader2 className="w-3 h-3 animate-spin"/> Calcolo indirizzo in corso...
+                        </p>
+                    ) : (
+                        <p className="text-xs text-text-muted mt-1">Puoi modificare questo testo o cliccare sulla mappa
+                            per aggiornarlo.</p>
+                    )}
                 </div>
 
                 <div>
@@ -205,7 +251,6 @@ export default function BarrierForm(
 
                     {(existingPhotos.length > 0 || newPhotoPreviews.length > 0) && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {/* Foto Esistenti */}
                             {existingPhotos.map((url, idx) => (
                                 <div key={url}
                                      className="relative aspect-square rounded-xl border-2 border-border overflow-hidden bg-background shadow-sm group">
@@ -218,7 +263,6 @@ export default function BarrierForm(
                                 </div>
                             ))}
 
-                            {/* Foto Nuove (Preview) */}
                             {newPhotoPreviews.map((url, idx) => (
                                 <div key={url}
                                      className="relative aspect-square rounded-xl border-2 border-primary overflow-hidden bg-background shadow-sm group animate-in zoom-in duration-200">
@@ -250,13 +294,7 @@ export default function BarrierForm(
                     Posizione Esatta <span className="text-error">*</span>
                 </h2>
 
-                {!locationReady ? ( // NOSONAR
-                    <div
-                        className="w-full h-100 bg-background rounded-xl flex flex-col items-center justify-center border border-border shadow-inner gap-3">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary"/>
-                        <span className="text-sm font-medium text-text-muted">Ricerca posizione GPS...</span>
-                    </div>
-                ) : (
+                {locationReady ? (
                     <div
                         className="relative w-full h-100 rounded-xl border border-border overflow-hidden shadow-inner">
                         <div className="absolute top-3 left-3 right-3 z-10">
@@ -291,6 +329,12 @@ export default function BarrierForm(
                                 <p className="text-sm font-bold text-primary">Tocca la mappa per posizionare</p>
                             </div>
                         )}
+                    </div>
+                ) : (
+                    <div
+                        className="w-full h-100 bg-background rounded-xl flex flex-col items-center justify-center border border-border shadow-inner gap-3">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary"/>
+                        <span className="text-sm font-medium text-text-muted">Ricerca posizione GPS...</span>
                     </div>
                 )}
             </section>
