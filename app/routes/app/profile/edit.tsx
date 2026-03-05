@@ -61,7 +61,7 @@ export default function EditProfilePage() {
 
     if (!user || !profile) {
         return (
-            <div className="p-8 flex justify-center">
+            <div className="p-8 flex justify-center w-full">
                 <Loader2 className="w-8 h-8 animate-spin text-primary"/>
             </div>
         );
@@ -102,7 +102,6 @@ export default function EditProfilePage() {
 
             if (photoFile) {
                 const fileExt = photoFile.name.split(".").pop() || "jpg";
-
                 const fileName = `avatar-${user.id}.${fileExt}`;
 
                 const {error: uploadError} = await supabase.storage
@@ -114,7 +113,6 @@ export default function EditProfilePage() {
                 if (uploadError) throw new Error("Errore durante il caricamento dell'immagine.");
 
                 const {data} = supabase.storage.from("profile-pictures").getPublicUrl(fileName);
-
                 finalPhotoUrl = `${data.publicUrl}?t=${Date.now()}`;
             }
 
@@ -157,16 +155,16 @@ export default function EditProfilePage() {
     const initials = `${profile?.firstName?.[0] || ""}${profile?.lastName?.[0] || ""}`.toUpperCase();
 
     return (
-        <div className="p-4 md:p-8 max-w-5xl mx-auto pb-24 animate-in fade-in duration-300">
+        <div className="w-full max-w-5xl mx-auto p-4 md:p-8 pb-24 animate-in fade-in duration-300">
 
             <header className="flex items-center gap-4 mb-6">
                 <Link to="/app/profile"
-                      className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm">
+                      className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm shrink-0">
                     <ArrowLeft className="w-5 h-5 text-text"/>
                 </Link>
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-extrabold text-text">Modifica Account</h1>
-                    <p className="text-sm text-text-muted mt-1">Gestisci i tuoi dati personali</p>
+                <div className="min-w-0">
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-text truncate">Modifica Account</h1>
+                    <p className="text-sm text-text-muted mt-1 truncate">Gestisci i tuoi dati personali</p>
                 </div>
             </header>
 
@@ -177,12 +175,12 @@ export default function EditProfilePage() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
+            <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
 
                 {/* --- COLONNA SINISTRA: Foto Profilo --- */}
-                <div className="md:col-span-5 flex flex-col gap-6">
+                <div className="w-full md:col-span-5 flex flex-col gap-6">
                     <section
-                        className="bg-surface rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+                        className="w-full bg-surface rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
                         <div className="absolute top-0 left-0 right-0 h-24 bg-primary/10"></div>
 
                         <div className="relative z-10 mt-4 group cursor-pointer">
@@ -206,7 +204,7 @@ export default function EditProfilePage() {
                                    disabled={isSubmittingProfile}/>
                         </div>
 
-                        <h2 className="text-xl font-bold text-text mt-3 relative z-10">
+                        <h2 className="text-xl font-bold text-text mt-3 relative z-10 truncate w-full px-2">
                             {profile?.firstName} {profile?.lastName}
                         </h2>
                         <p className="text-sm font-medium text-text-muted mt-1 relative z-10">Tocca la foto per
@@ -215,11 +213,11 @@ export default function EditProfilePage() {
                 </div>
 
                 {/* --- COLONNA DESTRA: Dati Testuali e Password --- */}
-                <div className="md:col-span-7 flex flex-col gap-6">
+                <div className="w-full md:col-span-7 flex flex-col gap-6">
 
                     {/* FORM DATI */}
                     <Form onSubmit={handleProfileSubmit}
-                          className="bg-surface rounded-3xl border border-border p-6 shadow-sm space-y-5">
+                          className="w-full bg-surface rounded-3xl border border-border p-6 shadow-sm space-y-5">
                         <h2 className="text-lg font-bold text-text mb-2 border-b border-border pb-2">Dati Personali</h2>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -257,7 +255,7 @@ export default function EditProfilePage() {
 
                     {/* SICUREZZA E PASSWORD */}
                     <form onSubmit={handlePasswordChange}
-                          className="bg-surface rounded-3xl border border-border p-6 shadow-sm space-y-5">
+                          className="w-full bg-surface rounded-3xl border border-border p-6 shadow-sm space-y-5">
                         <h2 className="flex items-center gap-2 text-lg font-bold text-text border-b border-border pb-2">
                             <Lock className="w-5 h-5 text-primary"/> Sicurezza
                         </h2>

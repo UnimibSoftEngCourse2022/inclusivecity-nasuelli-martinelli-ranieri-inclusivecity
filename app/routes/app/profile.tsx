@@ -16,17 +16,16 @@ export default function ProfilePage() {
     const initials = `${profile?.firstName?.[0] || ""}${profile?.lastName?.[0] || ""}`.toUpperCase();
 
     return (
-        <div className="p-4 md:p-8 max-w-5xl mx-auto pb-24 animate-in fade-in duration-300">
+        <div className="w-full max-w-5xl mx-auto p-4 md:p-8 pb-24 animate-in fade-in duration-300">
             <h1 className="text-2xl md:text-3xl font-extrabold text-text mb-6">Il tuo Profilo</h1>
 
             {/* GRIGLIA RESPONSIVE: 1 colonna su mobile, 2 colonne su desktop */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
+            <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
 
                 {/* --- COLONNA SINISTRA (Profilo e Notifiche) --- */}
-                <div className="md:col-span-5 flex flex-col gap-6">
-                    {/* CARD PRINCIPALE PROFILO */}
+                <div className="w-full md:col-span-5 flex flex-col gap-6">
                     <section
-                        className="bg-surface rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center text-center gap-4 relative overflow-hidden">
+                        className="w-full bg-surface rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center text-center gap-4 relative overflow-hidden">
                         <div className="absolute top-0 left-0 right-0 h-24 bg-primary/10"></div>
 
                         <div className="relative z-10 flex flex-col items-center mt-4">
@@ -52,22 +51,21 @@ export default function ProfilePage() {
                         </div>
                     </section>
 
-                    {/* NOTIFICHE PUSH */}
-                    <section className="bg-surface rounded-3xl border border-border p-5 shadow-sm space-y-3">
+                    <section className="w-full bg-surface rounded-3xl border border-border p-5 shadow-sm space-y-3">
                         <div className="flex items-center gap-3">
-                            <div className="bg-warning/10 p-2.5 rounded-xl text-warning">
+                            <div className="bg-warning/10 p-2.5 rounded-xl text-warning shrink-0">
                                 <Bell className="w-5 h-5"/>
                             </div>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-text">Notifiche Push</h3>
-                                <p className="text-xs text-text-muted">Aggiornamenti sulle tue segnalazioni</p>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-text truncate">Notifiche Push</h3>
+                                <p className="text-xs text-text-muted truncate">Aggiornamenti sulle tue segnalazioni</p>
                             </div>
 
                             {isSupported && permission !== "denied" && (
                                 <button
                                     onClick={isActive ? disableNotifications : enableNotifications}
                                     disabled={notifLoading}
-                                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors disabled:opacity-50 ${isActive ? "bg-primary" : "bg-border"}`}
+                                    className={`shrink-0 relative inline-flex h-7 w-12 items-center rounded-full transition-colors disabled:opacity-50 ${isActive ? "bg-primary" : "bg-border"}`}
                                 >
                                     <span
                                         className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${isActive ? "translate-x-6" : "translate-x-1"}`}/>
@@ -86,11 +84,10 @@ export default function ProfilePage() {
                     </section>
                 </div>
 
-                {/* COLONNA DESTRA */}
-                <div className="md:col-span-7 flex flex-col gap-6">
-                    {/* MENU NAVIGAZIONE */}
+                {/* --- COLONNA DESTRA (Menu e Logout) --- */}
+                <div className="w-full md:col-span-7 flex flex-col gap-6">
                     <section
-                        className="bg-surface rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col h-fit">
+                        className="w-full bg-surface rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col h-fit">
                         <Link to="/app/profile/edit"
                               className="flex items-center justify-between p-5 hover:bg-background transition-colors border-b border-border/50 group">
                             <div className="flex items-center gap-4">
@@ -104,7 +101,7 @@ export default function ProfilePage() {
                         </Link>
 
                         <button onClick={() => navigate(`/app/barriers?view=me&userId=${profile?.id}`)}
-                                className="flex items-center justify-between p-5 hover:bg-background transition-colors border-b border-border/50 group text-left">
+                                className="w-full flex items-center justify-between p-5 hover:bg-background transition-colors border-b border-border/50 group text-left">
                             <div className="flex items-center gap-4">
                                 <div
                                     className="bg-primary/10 p-2.5 rounded-xl text-primary group-hover:scale-110 transition-transform">
@@ -116,7 +113,7 @@ export default function ProfilePage() {
                         </button>
 
                         <button onClick={() => navigate("/app/barriers")}
-                                className="flex items-center justify-between p-5 hover:bg-background transition-colors group text-left">
+                                className="w-full flex items-center justify-between p-5 hover:bg-background transition-colors group text-left">
                             <div className="flex items-center gap-4">
                                 <div
                                     className="bg-primary/10 p-2.5 rounded-xl text-primary group-hover:scale-110 transition-transform">
@@ -128,9 +125,9 @@ export default function ProfilePage() {
                         </button>
                     </section>
 
-                    {/* ADMIN SECTION */}
                     {isAdmin && (
-                        <section className="bg-error/5 rounded-3xl border border-error/20 shadow-sm overflow-hidden">
+                        <section
+                            className="w-full bg-error/5 rounded-3xl border border-error/20 shadow-sm overflow-hidden">
                             <Link to="/app/admin/reports"
                                   className="flex items-center justify-between p-5 hover:bg-error/10 transition-colors group text-left">
                                 <div className="flex items-center gap-4">
@@ -148,7 +145,6 @@ export default function ProfilePage() {
                         </section>
                     )}
 
-                    {/* LOGOUT */}
                     <button
                         onClick={signOut}
                         className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl text-error font-bold hover:bg-error/10 transition-colors border border-transparent hover:border-error/20 active:scale-95 mt-auto"
