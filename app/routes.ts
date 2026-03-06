@@ -30,6 +30,7 @@ export default [
             // Profilo e Impostazioni
             route("profile", "routes/app/profile.tsx"),
             route("profile/edit", "routes/app/profile/edit.tsx"),
+            route("notifications", "routes/app/notifications.tsx"),
 
             // Gestione Barriere
             route("barriers", "routes/app/barriers/list.tsx"),
@@ -39,6 +40,7 @@ export default [
             route("barriers/:id/resolve", "routes/app/barriers/resolve.tsx"),
             route("barriers/:id/feedbacks", "routes/app/barriers/feedbacks.tsx"),
             route("barriers/:id/resolutions", "routes/app/barriers/resolutions.tsx"),
+            route("barriers/:id/reports", "routes/app/barriers/reports.tsx"),
 
             // Area Admin
             route("admin/reports", "routes/app/admin/reports.tsx"),
