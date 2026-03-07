@@ -9,7 +9,8 @@
     "build": "npx prisma generate && react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "test": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -49,6 +50,7 @@
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
     "vite-plugin-pwa": "^1.2.0",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.18"
   }
 }
