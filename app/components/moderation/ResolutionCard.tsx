@@ -41,12 +41,14 @@ export default function ResolutionCard({
         : "bg-background border-border/50 hover:border-primary/30";
 
     const padding = compact ? "p-3" : "p-4";
-    const imgSize = compact ? "w-20 h-20 sm:w-24 sm:h-24" : "w-full sm:w-32 h-32";
+    const imgSize = compact ? "w-20 h-20 sm:w-24 sm:h-24" : "w-full h-48 sm:w-32 sm:h-32";
     const textSize = compact ? "text-xs" : "text-sm";
+
+    const flexLayout = compact ? "flex-row items-start" : "flex-col sm:flex-row";
 
     return (
         <div
-            className={`${padding} rounded-2xl border flex flex-row gap-3 sm:gap-4 transition-colors ${containerStyles}`}>
+            className={`${padding} rounded-2xl border flex ${flexLayout} gap-3 sm:gap-4 transition-colors ${containerStyles}`}>
             {evidenceUrl && (
                 <button
                     className={`${imgSize} shrink-0 rounded-xl overflow-hidden border border-border bg-surface relative group cursor-pointer`}
@@ -56,7 +58,7 @@ export default function ResolutionCard({
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"/>
                 </button>
             )}
-            <div className="flex-1 flex flex-col justify-between min-w-0">
+            <div className="flex-1 flex flex-col justify-between min-w-0 w-full">
                 <div>
                     <div className="flex justify-between items-start mb-1.5 gap-2">
                         <div className="flex items-center gap-2 flex-wrap min-w-0">
@@ -80,8 +82,8 @@ export default function ResolutionCard({
                     )}
                 </div>
 
-                <div className="flex items-end justify-between mt-2">
-                    <span className="text-[9px] text-text-muted/70 block uppercase tracking-wider font-medium">
+                <div className="flex items-end justify-between mt-3 flex-wrap gap-2">
+                    <span className="text-[10px] text-text-muted/70 block uppercase tracking-wider font-medium">
                         {formatDate(createdAt)}
                     </span>
                     {adminActions && (
