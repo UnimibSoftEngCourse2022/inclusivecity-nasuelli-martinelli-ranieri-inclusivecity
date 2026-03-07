@@ -4,7 +4,9 @@ import {redirect, useLoaderData, useNavigation as useReactNavigation, useSubmit}
 import {prisma} from "~/db.server";
 import {useAuth} from "~/context/AuthContext";
 import {supabase} from "~/services/supabase";
-import {ArrowLeft, Loader2, UploadCloud, X} from "lucide-react";
+import {Loader2, UploadCloud, X} from "lucide-react";
+import PageWrapper from "~/components/ui/PageWrapper";
+import PageHeader from "~/components/ui/PageHeader";
 
 export async function loader({params}: LoaderFunctionArgs) {
     const {id} = params;
@@ -113,17 +115,11 @@ export default function ResolveBarrierPage() {
     }
 
     return (
-        <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6 animate-in fade-in">
-            <div className="flex items-center gap-4">
-                <button onClick={() => globalThis.history.back()}
-                        className="p-3 bg-surface border border-border rounded-full hover:bg-background shadow-sm">
-                    <ArrowLeft className="w-5 h-5 text-text"/>
-                </button>
-                <div>
-                    <h1 className="text-2xl font-bold text-text">Proponi Risoluzione</h1>
-                    <p className="text-sm text-text-muted">Per: {barrier.title}</p>
-                </div>
-            </div>
+        <PageWrapper>
+            <PageHeader
+                title="Proponi Risoluzione"
+                subtitle={`Per: ${barrier.title}`}
+            />
 
             {clientError &&
                 <div className="p-4 bg-error/10 text-error rounded-xl text-sm font-medium">{clientError}</div>}
@@ -171,6 +167,6 @@ export default function ResolveBarrierPage() {
                     {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin"/> : "Invia Prova per la Verifica"}
                 </button>
             </form>
-        </div>
+        </PageWrapper>
     );
 }

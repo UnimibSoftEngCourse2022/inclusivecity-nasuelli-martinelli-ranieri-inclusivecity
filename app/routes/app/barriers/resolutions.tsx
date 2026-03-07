@@ -1,10 +1,14 @@
-import type {LoaderFunctionArgs} from "react-router";
-import {Link, useFetcher, useLoaderData, useNavigation as useReactNavigation, useSearchParams} from "react-router";
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import type {ActionFunctionArgs, LoaderFunctionArgs} from "react-router";
+import {useFetcher, useLoaderData} from "react-router";
 import {prisma} from "~/db.server";
 import {useAuth} from "~/context/AuthContext";
-import {ArrowLeft, CheckCircle, Loader2, Search} from "lucide-react";
+import {CheckCircle, Loader2, ShieldCheck, XCircle} from "lucide-react";
 import ResolutionCard from "~/components/moderation/ResolutionCard";
+import {useInfiniteList} from "~/hooks/useInfiniteList";
+import PageWrapper from "~/components/ui/PageWrapper";
+import PageHeader from "~/components/ui/PageHeader";
+import SearchInput from "~/components/ui/SearchInput";
+import EmptyState from "~/components/ui/EmptyState";
 
 export async function loader({request, params}: LoaderFunctionArgs) {
     const {id: barrierId} = params;
@@ -18,14 +22,12 @@ export async function loader({request, params}: LoaderFunctionArgs) {
 
     const barrier = await prisma.barrier.findUnique({
         where: {id: barrierId},
-        select: {title: true}
+        select: {id: true, title: true, state: true}
     });
 
     if (!barrier) throw new Response("Barriera non trovata", {status: 404});
 
     const where: any = {barrierId};
-
-    // Ricerca per Commento o per Nome/Cognome dell'autore
     if (q) {
         where.OR = [
             {comment: {contains: q, mode: 'insensitive'}},
@@ -38,179 +40,118 @@ export async function loader({request, params}: LoaderFunctionArgs) {
 
     const [resolutions, totalCount] = await Promise.all([
         prisma.resolution.findMany({
-            where,
-            orderBy: {createdAt: 'desc'},
-            skip,
-            take: PAGE_SIZE,
+            where, orderBy: {createdAt: 'desc'}, skip, take: PAGE_SIZE,
             include: {user: {select: {id: true, firstName: true, lastName: true}}}
         }),
         prisma.resolution.count({where})
     ]);
 
     const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
     return {barrier, resolutions, totalCount, totalPages, page, q, barrierId};
 }
 
-export default function ResolutionsListPage() {
-    const {
-        barrier,
-        resolutions: initialResolutions,
-        totalCount,
-        totalPages,
-        page,
-        q,
-        barrierId
-    } = useLoaderData<typeof loader>();
-    const {profile} = useAuth();
+export async function action({request, params}: ActionFunctionArgs) {
+    const formData = await request.formData();
+    const intent = formData.get("intent");
+    const {id: barrierId} = params;
+    const resolutionId = formData.get("resolutionId") as string;
+    const approverId = formData.get("approverId") as string;
 
-    const [searchParams, setSearchParams] = useSearchParams();
-    const navigation = useReactNavigation();
-    const fetcher = useFetcher<typeof loader>();
-
-    const isLoadingFilters = navigation.state === "loading";
-
-    const [items, setItems] = useState(initialResolutions);
-    const [activePage, setActivePage] = useState(page);
-    const [searchQuery, setSearchQuery] = useState(q);
-
-    // Sync iniziale
-    useEffect(() => {
-        setItems(initialResolutions);
-        setActivePage(page);
-        setSearchQuery(q);
-    }, [initialResolutions, page, q]);
-
-    // Aggiunta Items (Infinite Scroll)
-    useEffect(() => {
-        if (!fetcher.data || fetcher.state !== "idle" || fetcher.data.page <= activePage || fetcher.data.q !== q) {
-            return;
+    try {
+        if (intent === "RESOLVE_BARRIER") {
+            await prisma.barrier.update({where: {id: barrierId}, data: {state: "RESOLVED"}});
+        } else if (intent === "REJECT_RESOLUTION") {
+            await prisma.resolution.update({
+                where: {id: resolutionId},
+                data: {status: "REJECTED", approverId: approverId, approvedAt: new Date()}
+            });
         }
+        return {success: true};
+    } catch {
+        return {error: "Errore durante l'operazione."};
+    }
+}
 
-        const fetchedResolutions = fetcher.data.resolutions;
-        const nextPage = fetcher.data.page;
+export default function ResolutionsListPage() {
+    const {barrier, resolutions, totalCount, totalPages, page, q, barrierId} = useLoaderData<typeof loader>();
+    const {profile} = useAuth();
+    const fetcher = useFetcher<typeof action>();
+    const isAdmin = profile?.role === "ADMIN";
 
-        setItems((prev) => {
-            const existingIds = new Set(prev.map(item => item.id));
-
-            const newItems = fetchedResolutions.filter(item => !existingIds.has(item.id));
-
-            return [...prev, ...newItems];
-        });
-
-        setActivePage(nextPage);
-    }, [fetcher.data, fetcher.state, activePage, q]);
-
-    // Observer Infinite Scroll
-    const observer = useRef<IntersectionObserver | null>(null);
-    const loadMoreRef = useCallback((node: HTMLDivElement | null) => {
-        if (fetcher.state === "loading" || navigation.state === "loading") return;
-        if (observer.current) observer.current.disconnect();
-
-        observer.current = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && activePage < totalPages) {
-                const sp = new URLSearchParams(searchParams);
-                sp.set("page", String(activePage + 1));
-                fetcher.load(`/app/barriers/${barrierId}/resolutions?${sp.toString()}`);
-            }
-        }, {rootMargin: "200px"});
-
-        if (node) observer.current.observe(node);
-    }, [fetcher, activePage, totalPages, searchParams, navigation.state, barrierId]);
-
-    // Update Filtri
-    const updateFilters = (value: string) => {
-        const sp = new URLSearchParams(searchParams);
-        sp.set("q", value);
-        sp.set("page", "1");
-        setSearchParams(sp, {replace: true});
-    };
-
-    // Debounce
-    useEffect(() => {
-        const timeout = setTimeout(() => {
-            if (searchQuery !== q) {
-                updateFilters(searchQuery);
-            }
-        }, 500);
-        return () => clearTimeout(timeout);
-    }, [searchQuery, q]);
+    const {
+        items,
+        activePage,
+        searchQuery,
+        setSearchQuery,
+        isLoadingFilters,
+        loadMoreRef,
+        updateFilters
+    } = useInfiniteList({
+        initialItems: resolutions,
+        initialPage: page,
+        initialQuery: q,
+        totalPages,
+        fetchUrl: `/app/barriers/${barrierId}/resolutions`,
+        dataKey: "resolutions"
+    });
 
     return (
-        <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto pb-24 animate-in fade-in duration-300">
+        <PageWrapper>
+            <PageHeader title="Prove di Risoluzione" subtitle={`Per: ${barrier.title}`}
+                        backUrl={`/app/barriers/${barrierId}`}/>
 
-            {/* HEADER */}
-            <div className="flex items-center gap-4">
-                <Link to={`/app/barriers/${barrierId}`}
-                      className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm">
-                    <ArrowLeft className="w-5 h-5 text-text"/>
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-text">Tutte le Prove</h1>
-                    <p className="text-sm text-text-muted mt-1 truncate max-w-62.5 sm:max-w-md">Per: {barrier.title}</p>
-                </div>
-            </div>
-
-            {/* SEARCH BAR */}
-            <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted"/>
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Cerca per autore o commento..."
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-border bg-surface outline-none focus:ring-2 focus:ring-primary shadow-sm text-text transition-all"
-                />
-            </div>
-
-            {/* CONTATORE */}
-            <div className="text-sm font-semibold text-text-muted flex items-center gap-2">
-                {isLoadingFilters ?
-                    <Loader2 className="w-4 h-4 animate-spin text-primary"/> : `${totalCount} prove trovate`}
-            </div>
-
-            {/* EMPTY STATE */}
-            {!isLoadingFilters && items.length === 0 && (
-                <div
-                    className="bg-surface border-2 border-dashed border-border p-12 rounded-3xl text-center flex flex-col items-center justify-center text-text-muted space-y-3">
-                    <CheckCircle className="w-12 h-12 opacity-20"/>
-                    <p className="font-medium text-lg">Nessuna prova trovata.</p>
-                    <button onClick={() => updateFilters("")}
-                            className="text-primary font-bold hover:underline mt-2">Azzera ricerca
+            {isAdmin && barrier.state !== "RESOLVED" && (
+                <fetcher.Form method="post"
+                              className="bg-success/10 border-2 border-success/30 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h3 className="font-bold text-success flex items-center gap-2"><ShieldCheck
+                            className="w-5 h-5"/> Azione Admin</h3>
+                        <p className="text-xs text-success/80 mt-1">Approva in blocco la barriera per chiudere la
+                            segnalazione.</p>
+                    </div>
+                    <button type="submit" name="intent" value="RESOLVE_BARRIER" disabled={fetcher.state !== "idle"}
+                            className="w-full sm:w-auto shrink-0 bg-success text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-success/90 transition active:scale-95 disabled:opacity-50">
+                        {fetcher.state === "idle" ?
+                            "Segna Barriera come Risolta" : <Loader2 className="w-5 h-5 animate-spin mx-auto"/>}
                     </button>
-                </div>
+                </fetcher.Form>
             )}
 
-            {/* LISTA */}
-            <div className="space-y-4">
-                {items.map(res => (
-                    <ResolutionCard
-                        key={res.id}
-                        userFullName={`${res.user.firstName} ${res.user.lastName || ""}`}
-                        status={res.status}
-                        evidenceUrl={res.evidenceUrl}
-                        comment={res.comment}
-                        createdAt={res.createdAt}
-                        isOwn={res.user.id === profile?.id}
-                    />
-                ))}
-            </div>
+            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Cerca per autore o commento..."
+                         isLoading={isLoadingFilters} resultsCount={totalCount} resultsLabel="prove"/>
 
-            {/* LOADER INFINITE SCROLL */}
+            {!isLoadingFilters && items.length === 0 ? (
+                <EmptyState icon={CheckCircle} title="Nessuna prova trovata." actionLabel="Azzera ricerca"
+                            onAction={() => updateFilters("")}/>
+            ) : (
+                <div className="space-y-4">
+                    {items.map((res: any) => (
+                        <ResolutionCard key={res.id}
+                                        userFullName={`${res.user.firstName} ${res.user.lastName || ""}`}
+                                        status={res.status}
+                                        evidenceUrl={res.evidenceUrl}
+                                        comment={res.comment}
+                                        createdAt={res.createdAt}
+                                        isOwn={res.user.id === profile?.id}
+                                        adminActions={isAdmin && res.status === "PENDING" && barrier.state !== "RESOLVED" ? (
+                                            <fetcher.Form method="post">
+                                                <input type="hidden" name="resolutionId" value={res.id}/><input
+                                                type="hidden" name="approverId" value={profile?.id}/>
+                                                <button type="submit" name="intent" value="REJECT_RESOLUTION"
+                                                        disabled={fetcher.state !== "idle"}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-error/10 text-error hover:bg-error/20 border border-error/20 rounded-lg text-xs font-bold transition-colors disabled:opacity-50">
+                                                    <XCircle className="w-3.5 h-3.5"/> Scarta
+                                                </button>
+                                            </fetcher.Form>
+                                        ) : null}/>
+                    ))}
+                </div>
+            )}
             {activePage < totalPages && (
-                <div ref={loadMoreRef} className="flex justify-center items-center py-6">
+                <div ref={loadMoreRef} className="flex justify-center py-6">
                     <Loader2 className="w-8 h-8 animate-spin text-primary"/>
                 </div>
             )}
-
-            {items.length > 0 && activePage >= totalPages && (
-                <div className="text-center pb-8 pt-4">
-                    <p className="text-xs font-bold uppercase tracking-widest text-text-muted/50">
-                        Hai raggiunto la fine
-                    </p>
-                </div>
-            )}
-
-        </div>
+        </PageWrapper>
     );
 }

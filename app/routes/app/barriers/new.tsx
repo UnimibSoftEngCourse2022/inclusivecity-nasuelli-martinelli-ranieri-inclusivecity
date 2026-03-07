@@ -6,6 +6,8 @@ import {useAuth} from "~/context/AuthContext";
 import {barrierFormSchema} from "~/utils/validations";
 import {uploadBarrierPhotos} from "~/utils/storage";
 import BarrierForm from "~/components/barrier/BarrierForm";
+import PageHeader from "~/components/ui/PageHeader";
+import PageWrapper from "~/components/ui/PageWrapper";
 
 export async function loader() {
     const types = await prisma.barrierType.findMany({orderBy: {label: 'asc'}});
@@ -113,11 +115,12 @@ export default function NewBarrier() {
     };
 
     return (
-        <div className="w-full p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
-            <header className="w-full min-w-0">
-                <h1 className="text-2xl font-bold text-text truncate">Segnala una barriera</h1>
-                <p className="text-sm text-text-muted mt-1 truncate">Aiuta la community mappando un nuovo ostacolo.</p>
-            </header>
+        <PageWrapper>
+            <PageHeader
+                title="Segnala una barriera"
+                subtitle="Aiuta la community mappando un nuovo ostacolo."
+                showBack={false}
+            />
 
             <BarrierForm
                 types={types}
@@ -126,6 +129,6 @@ export default function NewBarrier() {
                 clientError={displayError}
                 onSubmit={handleFormSubmit}
             />
-        </div>
+        </PageWrapper>
     );
 }

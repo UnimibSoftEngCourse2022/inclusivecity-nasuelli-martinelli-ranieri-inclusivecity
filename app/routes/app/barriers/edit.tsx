@@ -11,10 +11,12 @@ import {
 import {prisma} from "~/db.server";
 import {envSchema} from "~/utils/envSchema";
 import {useAuth} from "~/context/AuthContext";
-import {ArrowLeft, ShieldAlert} from "lucide-react";
+import {ShieldAlert} from "lucide-react";
 import {barrierFormSchema} from "~/utils/validations";
-import {uploadBarrierPhotos} from "~/utils/storage";
+import {deletePhotosFromStorage, uploadBarrierPhotos} from "~/utils/storage";
 import BarrierForm from "~/components/barrier/BarrierForm";
+import PageWrapper from "~/components/ui/PageWrapper";
+import PageHeader from "~/components/ui/PageHeader";
 
 export async function loader({params}: LoaderFunctionArgs) {
     const {id} = params;
@@ -39,6 +41,10 @@ export async function loader({params}: LoaderFunctionArgs) {
     const barrier = result[0];
     if (!barrier) throw new Response("Barriera non trovata", {status: 404});
 
+    if (barrier.state === 'RESOLVED' || barrier.state === 'HIDDEN') {
+        throw new Response("Questa barriera non può più essere modificata", {status: 403});
+    }
+
     const types = await prisma.barrierType.findMany({orderBy: {label: 'asc'}});
     const env = envSchema.parse(process.env);
 
@@ -61,9 +67,22 @@ export async function action({request, params}: ActionFunctionArgs) {
         const existingBarrier = await prisma.barrier.findUnique({where: {id: barrierId}});
         if (!existingBarrier) return {error: "Barriera non trovata"};
 
+        if (existingBarrier.state === 'RESOLVED' || existingBarrier.state === 'HIDDEN') {
+            return {error: "Questa barriera non può più essere modificata."};
+        }
+
         const user = await prisma.user.findUnique({where: {id: data.userId}});
         if (!user || (existingBarrier.userId !== user.id && user.role !== "ADMIN")) {
             return {error: "Non sei autorizzato a modificare questa barriera."};
+        }
+
+        const oldPhotos = existingBarrier.photoUrls;
+        const newPhotosRaw = data.photoUrls;
+
+        const photosToDelete = oldPhotos.filter(oldUrl => !newPhotosRaw.includes(oldUrl));
+
+        if (photosToDelete.length > 0) {
+            await deletePhotosFromStorage("barrier-photos", photosToDelete);
         }
 
         await prisma.$executeRaw`
@@ -102,11 +121,13 @@ export default function EditBarrierPage() {
             <div className="w-full p-6 max-w-xl mx-auto text-center mt-20 space-y-4">
                 <ShieldAlert className="w-16 h-16 text-error mx-auto opacity-80"/>
                 <h1 className="text-2xl font-bold text-text">Accesso Negato</h1>
-                <p className="text-text-muted">Non hai i permessi per modificare questa barriera perché non ne sei il
-                    creatore.</p>
+                <p className="text-text-muted">
+                    Non hai i permessi per modificare questa barriera perché non ne sei il creatore.
+                </p>
                 <Link to={`/app/barriers/${barrier.id}`}
-                      className="inline-flex mt-4 bg-primary text-white px-6 py-3 rounded-xl font-bold shadow hover:bg-primary/90 transition">Torna
-                    alla Barriera</Link>
+                      className="inline-flex mt-4 bg-primary text-white px-6 py-3 rounded-xl font-bold shadow hover:bg-primary/90 transition">
+                    Torna alla Barriera
+                </Link>
             </div>
         );
     }
@@ -158,17 +179,12 @@ export default function EditBarrierPage() {
     };
 
     return (
-        <div className="w-full p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
-            <header className="w-full flex items-center gap-4">
-                <Link to={`/app/barriers/${barrier.id}`}
-                      className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm shrink-0">
-                    <ArrowLeft className="w-5 h-5 text-text"/>
-                </Link>
-                <div className="min-w-0">
-                    <h1 className="text-2xl font-bold text-text truncate">Modifica Barriera</h1>
-                    <p className="text-sm text-text-muted mt-1 truncate">Aggiorna i dettagli della tua segnalazione.</p>
-                </div>
-            </header>
+        <PageWrapper>
+            <PageHeader
+                title="Modifica Barriera"
+                subtitle="Aggiorna i dettagli della tua segnalazione."
+                backUrl={`/app/barriers/${barrier.id}`}
+            />
 
             <BarrierForm
                 types={types}
@@ -178,6 +194,6 @@ export default function EditBarrierPage() {
                 clientError={displayError}
                 onSubmit={handleFormSubmit}
             />
-        </div>
+        </PageWrapper>
     );
 }

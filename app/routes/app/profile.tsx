@@ -2,6 +2,10 @@ import {useAuth} from "~/context/AuthContext";
 import {Award, Bell, ChevronRight, List, LogOut, MapPin, Settings, Shield} from "lucide-react";
 import {Link, useNavigate} from "react-router";
 import {usePushNotifications} from "~/hooks/usePushNotifications";
+import PageWrapper from "~/components/ui/PageWrapper";
+import PageHeader from "~/components/ui/PageHeader";
+import {supabase} from "~/services/supabase";
+import {useEffect, useState} from "react";
 
 export default function ProfilePage() {
     const navigate = useNavigate();
@@ -12,12 +16,30 @@ export default function ProfilePage() {
         error: notifError, isActive, isSupported, permission
     } = usePushNotifications();
 
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    // Fetch del numero di notifiche non lette
+    useEffect(() => {
+        if (!profile?.id) return;
+        const fetchUnread = async () => {
+            const {count} = await supabase
+                .from('Notification')
+                .select('*', {count: 'exact', head: true})
+                .eq('userId', profile.id)
+                .eq('isRead', false);
+            setUnreadCount(count || 0);
+        };
+        fetchUnread();
+    }, [profile?.id]);
+
     const isAdmin = profile?.role === "ADMIN";
     const initials = `${profile?.firstName?.[0] || ""}${profile?.lastName?.[0] || ""}`.toUpperCase();
 
     return (
-        <div className="w-full p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
-            <h1 className="text-2xl md:text-3xl font-extrabold text-text mb-6">Il tuo Profilo</h1>
+        <PageWrapper>
+            <div className="mb-2">
+                <PageHeader title="Il tuo Profilo" showBack={false}/>
+            </div>
 
             {/* GRIGLIA RESPONSIVE: 1 colonna su mobile, 2 colonne su desktop */}
             <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
@@ -88,6 +110,36 @@ export default function ProfilePage() {
                 <div className="w-full md:col-span-7 flex flex-col gap-6">
                     <section
                         className="w-full bg-surface rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col h-fit">
+                        {/* LINK CENTRO NOTIFICHE */}
+                        <Link to={`/app/notifications?userId=${profile?.id}`}
+                              className="flex items-center justify-between p-5 hover:bg-background transition-colors border-b border-border/50 group text-left">
+                            <div className="flex items-center gap-4">
+                                <div
+                                    className="relative bg-primary/10 p-2.5 rounded-xl text-primary group-hover:scale-110 transition-transform">
+                                    <Bell className="w-5 h-5"/>
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                            <span
+                                                className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-error"></span>
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="font-semibold text-text">Centro Notifiche</span>
+                                    <span className="text-xs text-text-muted">Messaggi e aggiornamenti</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                {unreadCount > 0 && (
+                                    <span
+                                        className="bg-error text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                                        {unreadCount} nuove
+                                    </span>)}
+                                <ChevronRight className="w-5 h-5 text-text-muted"/>
+                            </div>
+                        </Link>
+
                         <Link to="/app/profile/edit"
                               className="flex items-center justify-between p-5 hover:bg-background transition-colors border-b border-border/50 group">
                             <div className="flex items-center gap-4">
@@ -154,6 +206,6 @@ export default function ProfilePage() {
                 </div>
 
             </div>
-        </div>
+        </PageWrapper>
     );
 }

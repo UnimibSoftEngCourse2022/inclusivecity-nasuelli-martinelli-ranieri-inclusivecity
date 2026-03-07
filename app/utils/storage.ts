@@ -26,3 +26,14 @@ export async function uploadBarrierPhotos(files: File[]): Promise<string[]> {
 
     return uploadedUrls;
 }
+
+export async function deletePhotosFromStorage(bucket: string, urls: string[]) {
+    if (!urls || urls.length === 0) return;
+
+    const fileNames = urls.map(url => url.split('/').pop()).filter(Boolean) as string[];
+
+    if (fileNames.length > 0) {
+        const {error} = await supabase.storage.from(bucket).remove(fileNames);
+        if (error) console.error(`Errore rimozione file dal bucket ${bucket}:`, error);
+    }
+}

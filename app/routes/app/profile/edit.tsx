@@ -1,11 +1,13 @@
 import React, {useEffect, useState} from "react";
 import type {ActionFunctionArgs} from "react-router";
-import {Form, Link, redirect, useActionData, useNavigation as useReactNavigation, useSubmit} from "react-router";
+import {Form, redirect, useActionData, useNavigation as useReactNavigation, useSubmit} from "react-router";
 import {supabase} from "~/services/supabase";
 import {useAuth} from "~/context/AuthContext";
 import {prisma} from "~/db.server";
-import {ArrowLeft, Camera, CheckCircle, Loader2, Lock, Save} from "lucide-react";
+import {Camera, CheckCircle, Loader2, Lock, Save} from "lucide-react";
 import {profileSchema} from "~/utils/validations";
+import PageWrapper from "~/components/ui/PageWrapper";
+import PageHeader from "~/components/ui/PageHeader";
 
 
 export async function action({request}: ActionFunctionArgs) {
@@ -155,18 +157,12 @@ export default function EditProfilePage() {
     const initials = `${profile?.firstName?.[0] || ""}${profile?.lastName?.[0] || ""}`.toUpperCase();
 
     return (
-        <div className="w-full p-4 md:p-6 max-w-4xl mx-auto space-y-6 pb-24 animate-in fade-in duration-300">
-
-            <header className="flex items-center gap-4 mb-6">
-                <Link to="/app/profile"
-                      className="p-3 bg-surface border border-border rounded-full hover:bg-background transition-colors shadow-sm shrink-0">
-                    <ArrowLeft className="w-5 h-5 text-text"/>
-                </Link>
-                <div className="min-w-0">
-                    <h1 className="text-2xl md:text-3xl font-extrabold text-text truncate">Modifica Account</h1>
-                    <p className="text-sm text-text-muted mt-1 truncate">Gestisci i tuoi dati personali</p>
-                </div>
-            </header>
+        <PageWrapper>
+            <PageHeader
+                title="Modifica Account"
+                subtitle="Gestisci i tuoi dati personali"
+                backUrl="/app/profile"
+            />
 
             {displayError && (
                 <div
@@ -207,8 +203,9 @@ export default function EditProfilePage() {
                         <h2 className="text-xl font-bold text-text mt-3 relative z-10 truncate w-full px-2">
                             {profile?.firstName} {profile?.lastName}
                         </h2>
-                        <p className="text-sm font-medium text-text-muted mt-1 relative z-10">Tocca la foto per
-                            cambiarla</p>
+                        <p className="text-sm font-medium text-text-muted mt-1 relative z-10">
+                            Tocca la foto per cambiarla
+                        </p>
                     </section>
                 </div>
 
@@ -247,7 +244,8 @@ export default function EditProfilePage() {
                             disabled={isSubmittingProfile}
                             className="w-full mt-2 flex items-center justify-center gap-2 bg-primary text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-primary/90 disabled:opacity-70 transition active:scale-95"
                         >
-                            {isSubmittingProfile ? <Loader2 className="w-5 h-5 animate-spin"/> :
+                            {isSubmittingProfile ?
+                                <Loader2 className="w-5 h-5 animate-spin"/> :
                                 <Save className="w-5 h-5"/>}
                             {isUploading ? "Caricamento foto..." : "Salva Profilo"}
                         </button>
@@ -290,6 +288,6 @@ export default function EditProfilePage() {
                     </form>
                 </div>
             </div>
-        </div>
+        </PageWrapper>
     );
 }
