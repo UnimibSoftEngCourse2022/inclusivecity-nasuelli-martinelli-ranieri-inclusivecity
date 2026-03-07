@@ -1,0 +1,33 @@
+name: CI Pipeline - Check & Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del codice
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Installa Dipendenze
+        run: npm ci
+
+      - name: Genera Prisma Client
+        run: npx prisma generate
+
+      - name: Type Checking (TypeScript)
+        run: npm run typecheck
+
+      - name: Esecuzione Test Unitari (Vitest)
+        run: npm run test
