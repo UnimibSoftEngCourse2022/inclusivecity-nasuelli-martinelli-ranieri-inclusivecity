@@ -1,6 +1,6 @@
 import type {ResolutionStatus} from "@prisma/client";
-import {formatDate} from "~/utils/format";
 import React from "react";
+import {formatDate} from "../../utils/format";
 
 type Props = {
     userFullName: string;

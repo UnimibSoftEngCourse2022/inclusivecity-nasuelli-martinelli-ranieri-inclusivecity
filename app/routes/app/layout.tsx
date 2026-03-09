@@ -1,7 +1,7 @@
 import {Navigate, Outlet, useLocation} from "react-router";
-import {useAuth} from "~/context/AuthContext";
-import Loading from "~/components/Loading";
-import Navbar from "~/components/Navbar";
+import {useAuth} from "../../context/AuthContext";
+import Loading from "../../components/Loading";
+import Navbar from "../../components/Navbar";
 
 export default function AppLayout() {
     const {user, profile, loading} = useAuth();

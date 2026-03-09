@@ -1,11 +1,11 @@
-import {useAuth} from "~/context/AuthContext";
 import {Award, Bell, ChevronRight, List, LogOut, MapPin, Settings, Shield} from "lucide-react";
 import {Link, useNavigate} from "react-router";
-import {usePushNotifications} from "~/hooks/usePushNotifications";
-import PageWrapper from "~/components/ui/PageWrapper";
-import PageHeader from "~/components/ui/PageHeader";
-import {supabase} from "~/services/supabase";
 import {useEffect, useState} from "react";
+import {usePushNotifications} from "../../hooks/usePushNotifications";
+import {useAuth} from "../../context/AuthContext";
+import {supabase} from "../../services/supabase";
+import PageWrapper from "../../components/ui/PageWrapper";
+import PageHeader from "../../components/ui/PageHeader";
 
 export default function ProfilePage() {
     const navigate = useNavigate();

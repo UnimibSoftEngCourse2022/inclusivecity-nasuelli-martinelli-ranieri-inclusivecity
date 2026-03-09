@@ -1,6 +1,6 @@
-import ResolutionCard from "~/components/moderation/ResolutionCard";
 import {Link} from "react-router";
 import {Camera, CheckCircle} from "lucide-react";
+import ResolutionCard from "./ResolutionCard";
 
 export default function ResolutionsCard({barrier, profile, isAdmin}: Readonly<{
     barrier: any,

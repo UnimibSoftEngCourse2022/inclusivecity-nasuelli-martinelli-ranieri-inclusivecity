@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {barrierFormSchema} from "~/utils/validations";
+import {barrierFormSchema} from "../app/utils/validations";
 
 describe("barrierFormSchema utility", () => {
     const validBarrier = {

@@ -1,13 +1,13 @@
 import {useState} from "react";
 import {redirect, useActionData, useLoaderData, useNavigation as useReactNavigation, useSubmit} from "react-router";
-import {prisma} from "~/db.server";
-import {envSchema} from "~/utils/envSchema";
-import {useAuth} from "~/context/AuthContext";
-import {barrierFormSchema} from "~/utils/validations";
-import {uploadBarrierPhotos} from "~/utils/storage";
-import BarrierForm from "~/components/barrier/BarrierForm";
-import PageHeader from "~/components/ui/PageHeader";
-import PageWrapper from "~/components/ui/PageWrapper";
+import {envSchema} from "../../../utils/envSchema";
+import {prisma} from "../../../db.server";
+import {barrierFormSchema} from "../../../utils/validations";
+import {useAuth} from "../../../context/AuthContext";
+import {uploadBarrierPhotos} from "../../../utils/storage";
+import PageWrapper from "../../../components/ui/PageWrapper";
+import PageHeader from "../../../components/ui/PageHeader";
+import BarrierForm from "../../../components/barrier/BarrierForm";
 
 export async function loader() {
     const types = await prisma.barrierType.findMany({orderBy: {label: 'asc'}});

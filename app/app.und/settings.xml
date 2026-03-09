@@ -211,7 +211,7 @@
     add_found_imported_js_files="true"
     allow_asp_style_php_tags="false"
     allow_jquery="false"
-    allow_node_js="false"
+    allow_node_js="true"
     allow_short_php_tags="true"
     js_module_search_path=""
     node_js_predefined_config_file="$CONF:/understand/javascript/nodejs_predefined.txt"

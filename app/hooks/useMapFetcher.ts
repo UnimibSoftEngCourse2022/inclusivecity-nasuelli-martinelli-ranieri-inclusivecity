@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useState} from "react";
 import {useFetcher} from "react-router";
-import type {loader} from "~/routes/app/map";
+import type {loader} from "../routes/app/map";
 
 export function useMapFetcher(initialBaseDifficulty: number, userId?: string) {
     const fetcher = useFetcher<typeof loader>();

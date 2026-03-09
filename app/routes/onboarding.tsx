@@ -1,12 +1,12 @@
 import React, {useState} from "react";
 import {Navigate, useNavigate} from "react-router";
-import {supabase} from "~/services/supabase";
-import {useAuth} from "~/context/AuthContext";
 import type {Route} from "./+types/onboarding";
-import Loading from "~/components/Loading";
-import {getDynamicIcon} from "~/utils/icons";
 import {CheckCircle2} from "lucide-react";
-import {prisma} from "~/db.server";
+import {prisma} from "../db.server";
+import {useAuth} from "../context/AuthContext";
+import Loading from "../components/Loading";
+import {supabase} from "../services/supabase";
+import {getDynamicIcon} from "../utils/icons";
 
 export async function loader() {
     const data = await prisma.disability.findMany();

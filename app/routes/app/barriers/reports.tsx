@@ -1,15 +1,15 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from "react-router";
 import {useFetcher, useLoaderData} from "react-router";
 import React from "react";
-import {prisma} from "~/db.server";
-import {useAuth} from "~/context/AuthContext";
 import {AlertTriangle, EyeOff, Flag, Loader2, ShieldCheck, Undo2} from "lucide-react";
-import {formatDate} from "~/utils/format";
-import {useInfiniteList} from "~/hooks/useInfiniteList";
-import PageWrapper from "~/components/ui/PageWrapper";
-import PageHeader from "~/components/ui/PageHeader";
-import SearchInput from "~/components/ui/SearchInput";
-import EmptyState from "~/components/ui/EmptyState";
+import {prisma} from "../../../db.server";
+import {useAuth} from "../../../context/AuthContext";
+import {useInfiniteList} from "../../../hooks/useInfiniteList";
+import PageWrapper from "../../../components/ui/PageWrapper";
+import PageHeader from "../../../components/ui/PageHeader";
+import SearchInput from "../../../components/ui/SearchInput";
+import EmptyState from "../../../components/ui/EmptyState";
+import {formatDate} from "../../../utils/format";
 
 const REPORT_REASONS: Record<string, string> = {
     DOES_NOT_EXIST: "L'ostacolo non esiste più",

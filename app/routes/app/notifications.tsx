@@ -1,11 +1,5 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from "react-router";
 import {useFetcher, useLoaderData, useNavigate} from "react-router";
-import {prisma} from "~/db.server";
-import {useAuth} from "~/context/AuthContext";
-import PageWrapper from "~/components/ui/PageWrapper";
-import PageHeader from "~/components/ui/PageHeader";
-import EmptyState from "~/components/ui/EmptyState";
-import {useInfiniteList} from "~/hooks/useInfiniteList";
 import {
     AlertTriangle,
     Bell,
@@ -19,7 +13,13 @@ import {
     ShieldCheck,
     Trash2
 } from "lucide-react";
-import {formatDate} from "~/utils/format";
+import {prisma} from "../../db.server";
+import {useAuth} from "../../context/AuthContext";
+import {useInfiniteList} from "../../hooks/useInfiniteList";
+import PageWrapper from "../../components/ui/PageWrapper";
+import EmptyState from "../../components/ui/EmptyState";
+import PageHeader from "../../components/ui/PageHeader";
+import {formatDate} from "../../utils/format";
 
 export async function loader({request}: LoaderFunctionArgs) {
     const url = new URL(request.url);

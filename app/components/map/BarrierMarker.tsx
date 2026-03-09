@@ -1,6 +1,6 @@
 import {Marker} from "react-map-gl";
-import type {BarrierMapData} from "~/types/barrier";
-import {getDynamicIcon} from "~/utils/icons";
+import type {BarrierMapData} from "../../types/barrier";
+import {getDynamicIcon} from "../../utils/icons";
 
 type Props = {
     barrier: BarrierMapData;

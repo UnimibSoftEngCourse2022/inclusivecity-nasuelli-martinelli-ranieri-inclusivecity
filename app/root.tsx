@@ -3,8 +3,8 @@ import {isRouteErrorResponse, Links, Meta, type MetaFunction, Outlet, Scripts, S
 import type {Route} from "./+types/root";
 import "./app.css";
 import React from "react";
-import {useTheme} from "~/hooks/useTheme";
-import {AuthProvider} from "~/context/AuthContext";
+import {useTheme} from "./hooks/useTheme";
+import {AuthProvider} from "./context/AuthContext";
 
 export const links: Route.LinksFunction = () => [
     {rel: "preconnect", href: "https://fonts.googleapis.com"},

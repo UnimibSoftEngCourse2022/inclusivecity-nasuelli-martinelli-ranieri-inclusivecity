@@ -1,12 +1,12 @@
 import React, {useState} from "react";
 import type {LoaderFunctionArgs} from "react-router";
 import {redirect, useLoaderData, useNavigation as useReactNavigation, useSubmit} from "react-router";
-import {prisma} from "~/db.server";
-import {useAuth} from "~/context/AuthContext";
-import {supabase} from "~/services/supabase";
 import {Loader2, UploadCloud, X} from "lucide-react";
-import PageWrapper from "~/components/ui/PageWrapper";
-import PageHeader from "~/components/ui/PageHeader";
+import {prisma} from "../../../db.server";
+import {useAuth} from "../../../context/AuthContext";
+import {supabase} from "../../../services/supabase";
+import PageWrapper from "../../../components/ui/PageWrapper";
+import PageHeader from "../../../components/ui/PageHeader";
 
 export async function loader({params}: LoaderFunctionArgs) {
     const {id} = params;

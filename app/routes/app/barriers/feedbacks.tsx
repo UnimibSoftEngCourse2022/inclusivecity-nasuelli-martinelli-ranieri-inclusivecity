@@ -1,14 +1,14 @@
 import type {LoaderFunctionArgs} from "react-router";
 import {useLoaderData} from "react-router";
-import {prisma} from "~/db.server";
-import {useAuth} from "~/context/AuthContext";
 import {CheckCircle, Loader2} from "lucide-react";
-import FeedbackCard from "~/components/moderation/FeedbackCard";
-import {useInfiniteList} from "~/hooks/useInfiniteList";
-import PageWrapper from "~/components/ui/PageWrapper";
-import PageHeader from "~/components/ui/PageHeader";
-import SearchInput from "~/components/ui/SearchInput";
-import EmptyState from "~/components/ui/EmptyState";
+import {prisma} from "../../../db.server";
+import {useAuth} from "../../../context/AuthContext";
+import {useInfiniteList} from "../../../hooks/useInfiniteList";
+import PageWrapper from "../../../components/ui/PageWrapper";
+import PageHeader from "../../../components/ui/PageHeader";
+import SearchInput from "../../../components/ui/SearchInput";
+import EmptyState from "../../../components/ui/EmptyState";
+import FeedbackCard from "../../../components/moderation/FeedbackCard";
 
 export async function loader({request, params}: LoaderFunctionArgs) {
     const {id: barrierId} = params;

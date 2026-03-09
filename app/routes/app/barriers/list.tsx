@@ -1,14 +1,14 @@
 import type {LoaderFunctionArgs} from "react-router";
 import {Await, Link, useLoaderData, useNavigation as useReactNavigation, useSearchParams} from "react-router";
 import React, {Suspense, useEffect, useState} from "react";
-import {prisma} from "~/db.server";
-import {useAuth} from "~/context/AuthContext";
 import {ListFilter, Loader2, MapPin, Plus, Search} from "lucide-react";
-import {getDynamicIcon} from "~/utils/icons";
-import {formatDate} from "~/utils/format";
-import PageWrapper from "~/components/ui/PageWrapper";
-import EmptyState from "~/components/ui/EmptyState";
-import {useInfiniteList} from "~/hooks/useInfiniteList";
+import {prisma} from "../../../db.server";
+import {useAuth} from "../../../context/AuthContext";
+import PageWrapper from "../../../components/ui/PageWrapper";
+import {useInfiniteList} from "../../../hooks/useInfiniteList";
+import EmptyState from "../../../components/ui/EmptyState";
+import {getDynamicIcon} from "../../../utils/icons";
+import {formatDate} from "../../../utils/format";
 
 export async function loader({request}: LoaderFunctionArgs) {
     const url = new URL(request.url);

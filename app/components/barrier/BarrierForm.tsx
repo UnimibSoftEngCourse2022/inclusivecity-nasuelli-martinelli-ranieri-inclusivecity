@@ -2,8 +2,8 @@ import React, {useEffect, useState} from "react";
 import {Loader2, MapPin, UploadCloud, X} from "lucide-react";
 import Map, {Marker} from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import SearchBar from "~/components/map/SearchBar";
 import mapboxgl from "mapbox-gl";
+import SearchBar from "../map/SearchBar";
 
 type BarrierFormProps = {
     types: any[];

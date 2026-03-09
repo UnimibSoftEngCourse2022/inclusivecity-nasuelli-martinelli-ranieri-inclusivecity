@@ -1,5 +1,5 @@
 import {Star} from "lucide-react";
-import {formatDate} from "~/utils/format";
+import {formatDate} from "../../utils/format";
 
 type Props = {
     userFullName: string;

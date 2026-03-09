@@ -1,7 +1,7 @@
 import {Link} from "react-router";
 import {Popup} from "react-map-gl";
 import {AlertTriangle, ChevronRight, MapPin, ShieldAlert} from "lucide-react";
-import type {BarrierMapData} from "~/types/barrier";
+import type {BarrierMapData} from "../../types/barrier";
 
 type Props = {
     barrier: BarrierMapData | null;

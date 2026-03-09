@@ -3,16 +3,16 @@ import {Link, type LoaderFunctionArgs, useLoaderData} from "react-router";
 import Map, {GeolocateControl, Layer, NavigationControl, Source} from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {ArrowUpRight, Filter, Navigation, Plus, RotateCcw, X} from "lucide-react";
-import {prisma} from "~/db.server";
-import BarrierMapBanner from "~/components/map/BarrierMapBanner";
-import Loading from "~/components/Loading";
-import type {BarrierMapData} from "~/types/barrier";
-import {useAuth} from "~/context/AuthContext";
-import BarrierMarker from "~/components/map/BarrierMarker";
-import {useMapFetcher} from "~/hooks/useMapFetcher";
-import SearchBar from "~/components/map/SearchBar";
-import {envSchema} from "~/utils/envSchema";
-import {useNavigation} from "~/hooks/useNavigation";
+import type {BarrierMapData} from "../../types/barrier";
+import {prisma} from "../../db.server";
+import {envSchema} from "../../utils/envSchema";
+import {useAuth} from "../../context/AuthContext";
+import {useMapFetcher} from "../../hooks/useMapFetcher";
+import {useNavigation} from "../../hooks/useNavigation";
+import Loading from "../../components/Loading";
+import SearchBar from "../../components/map/SearchBar";
+import BarrierMarker from "../../components/map/BarrierMarker";
+import BarrierMapBanner from "../../components/map/BarrierMapBanner";
 
 export async function loader({request}: LoaderFunctionArgs) {
     const url = new URL(request.url);

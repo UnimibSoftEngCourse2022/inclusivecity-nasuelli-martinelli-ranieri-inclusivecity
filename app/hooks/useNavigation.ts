@@ -1,6 +1,6 @@
 import {useCallback, useState} from "react";
 import * as turf from "@turf/turf";
-import type {BarrierMapData} from "~/types/barrier";
+import type {BarrierMapData} from "../types/barrier";
 
 export type NavState = "IDLE" | "PRE_NAV" | "NAV";
 

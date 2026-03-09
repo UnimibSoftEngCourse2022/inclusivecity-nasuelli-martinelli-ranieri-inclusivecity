@@ -8,15 +8,15 @@ import {
     useNavigation as useReactNavigation,
     useSubmit
 } from "react-router";
-import {prisma} from "~/db.server";
-import {envSchema} from "~/utils/envSchema";
-import {useAuth} from "~/context/AuthContext";
 import {ShieldAlert} from "lucide-react";
-import {barrierFormSchema} from "~/utils/validations";
-import {deletePhotosFromStorage, uploadBarrierPhotos} from "~/utils/storage";
-import BarrierForm from "~/components/barrier/BarrierForm";
-import PageWrapper from "~/components/ui/PageWrapper";
-import PageHeader from "~/components/ui/PageHeader";
+import {prisma} from "../../../db.server";
+import {envSchema} from "../../../utils/envSchema";
+import {barrierFormSchema} from "../../../utils/validations";
+import {deletePhotosFromStorage, uploadBarrierPhotos} from "../../../utils/storage";
+import {useAuth} from "../../../context/AuthContext";
+import PageWrapper from "../../../components/ui/PageWrapper";
+import PageHeader from "../../../components/ui/PageHeader";
+import BarrierForm from "../../../components/barrier/BarrierForm";
 
 export async function loader({params}: LoaderFunctionArgs) {
     const {id} = params;

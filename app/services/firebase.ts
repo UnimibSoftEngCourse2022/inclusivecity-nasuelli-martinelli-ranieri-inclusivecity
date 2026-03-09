@@ -1,7 +1,7 @@
 import {getApp, getApps, initializeApp} from "firebase/app";
 import {type Analytics, getAnalytics, isSupported as isAnalyticsSupported} from "firebase/analytics";
 import {getMessaging, getToken, isSupported as isMessagingSupported} from "firebase/messaging";
-import {envSchema} from "~/utils/envSchema";
+import {envSchema} from "../utils/envSchema";
 
 const env = envSchema.parse(import.meta.env);
 

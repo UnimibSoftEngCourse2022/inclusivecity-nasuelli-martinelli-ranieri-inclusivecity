@@ -8,18 +8,18 @@ import {
     useNavigate,
     useSubmit
 } from "react-router";
-import {prisma} from "~/db.server";
 import type {ReportReason} from "@prisma/client";
-import {useAuth} from "~/context/AuthContext";
 import {ArrowLeft, Edit, MapPin, Trash2} from "lucide-react";
-import {getDynamicIcon} from "~/utils/icons";
-import PhotoGallery from "~/components/barrier/PhotoGallery";
-import {formatDate} from "~/utils/format";
-import ResolutionsCard from "~/components/moderation/ResolutionsCard";
-import FeedbacksCard from "~/components/moderation/FeedbacksCard";
-import AdminReportsCard from "~/components/moderation/AdminReportsCard";
-import UserReportFormCard from "~/components/moderation/UserReportFormCard";
-import {deletePhotosFromStorage} from "~/utils/storage";
+import {prisma} from "../../../db.server";
+import {deletePhotosFromStorage} from "../../../utils/storage";
+import {useAuth} from "../../../context/AuthContext";
+import {getDynamicIcon} from "../../../utils/icons";
+import PhotoGallery from "../../../components/barrier/PhotoGallery";
+import {formatDate} from "../../../utils/format";
+import ResolutionsCard from "../../../components/moderation/ResolutionsCard";
+import FeedbacksCard from "../../../components/moderation/FeedbacksCard";
+import AdminReportsCard from "../../../components/moderation/AdminReportsCard";
+import UserReportFormCard from "../../../components/moderation/UserReportFormCard";
 
 const REPORT_REASONS: Record<string, string> = {
     DOES_NOT_EXIST: "L'ostacolo non esiste più",

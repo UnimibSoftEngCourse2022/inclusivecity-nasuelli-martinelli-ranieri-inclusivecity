@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {profileSchema} from "~/utils/validations";
+import {profileSchema} from "../app/utils/validations";
 
 describe("profileSchema utility", () => {
     const validProfile = {

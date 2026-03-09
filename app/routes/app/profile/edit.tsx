@@ -1,13 +1,13 @@
 import React, {useEffect, useState} from "react";
 import type {ActionFunctionArgs} from "react-router";
 import {Form, redirect, useActionData, useNavigation as useReactNavigation, useSubmit} from "react-router";
-import {supabase} from "~/services/supabase";
-import {useAuth} from "~/context/AuthContext";
-import {prisma} from "~/db.server";
 import {Camera, CheckCircle, Loader2, Lock, Save} from "lucide-react";
-import {profileSchema} from "~/utils/validations";
-import PageWrapper from "~/components/ui/PageWrapper";
-import PageHeader from "~/components/ui/PageHeader";
+import {profileSchema} from "../../../utils/validations";
+import {prisma} from "../../../db.server";
+import {useAuth} from "../../../context/AuthContext";
+import {supabase} from "../../../services/supabase";
+import PageWrapper from "../../../components/ui/PageWrapper";
+import PageHeader from "../../../components/ui/PageHeader";
 
 
 export async function action({request}: ActionFunctionArgs) {

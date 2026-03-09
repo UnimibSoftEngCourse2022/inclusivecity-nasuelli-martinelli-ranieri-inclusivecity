@@ -1,13 +1,13 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from "react-router";
 import {Link, useFetcher, useLoaderData, useLocation} from "react-router";
 import {AlertTriangle, CheckCircle, EyeOff, Flag, Loader2, ShieldCheck, Undo2} from "lucide-react";
-import {prisma} from "~/db.server";
-import {useAuth} from "~/context/AuthContext";
-import {formatDate} from "~/utils/format";
-import PageWrapper from "~/components/ui/PageWrapper";
-import PageHeader from "~/components/ui/PageHeader";
-import EmptyState from "~/components/ui/EmptyState";
-import {REPORT_REASONS} from "~/utils/reportReason";
+import {prisma} from "../../../db.server";
+import {useAuth} from "../../../context/AuthContext";
+import PageWrapper from "../../../components/ui/PageWrapper";
+import PageHeader from "../../../components/ui/PageHeader";
+import EmptyState from "../../../components/ui/EmptyState";
+import {REPORT_REASONS} from "../../../utils/reportReason";
+import {formatDate} from "../../../utils/format";
 
 export async function loader({request}: LoaderFunctionArgs) {
     const barriersWithReports = await prisma.barrier.findMany({

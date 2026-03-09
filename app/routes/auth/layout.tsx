@@ -1,6 +1,6 @@
 import {Navigate, Outlet} from "react-router";
-import {useAuth} from "~/context/AuthContext";
-import Loading from "~/components/Loading";
+import {useAuth} from "../../context/AuthContext";
+import Loading from "../../components/Loading";
 
 export default function AuthLayout() {
     const {user, loading} = useAuth();

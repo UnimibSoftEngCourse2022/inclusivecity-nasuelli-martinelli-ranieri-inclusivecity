@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {envSchema} from '~/utils/envSchema';
+import {envSchema} from "../app/utils/envSchema";
 
 describe('envSchema utility', () => {
     const validEnv = {

@@ -1,8 +1,8 @@
 import React, {useState} from "react";
 import {Star} from "lucide-react";
-import StarRating from "~/components/barrier/StarRating";
-import FeedbackCard from "~/components/moderation/FeedbackCard";
 import {Link} from "react-router";
+import StarRating from "../barrier/StarRating";
+import FeedbackCard from "./FeedbackCard";
 
 export default function FeedbacksCard({barrier, profile, fetcher}: Readonly<{
     barrier: any,

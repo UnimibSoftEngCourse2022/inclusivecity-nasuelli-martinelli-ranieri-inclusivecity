@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {formatDate} from '~/utils/format';
+import {formatDate} from "../app/utils/format";
 
 describe('formatDate utility', () => {
     it('dovrebbe formattare correttamente una data valida', () => {

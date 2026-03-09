@@ -1,6 +1,6 @@
 import {AlertTriangle} from "lucide-react";
-import {REPORT_REASONS} from "~/utils/reportReason";
 import React from "react";
+import {REPORT_REASONS} from "../../utils/reportReason";
 
 export default function UserReportFormCard({barrier, profile, fetcher}: Readonly<{
     barrier: any,

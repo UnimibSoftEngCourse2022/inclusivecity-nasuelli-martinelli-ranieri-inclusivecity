@@ -1,8 +1,8 @@
 import {AlertTriangle, Flag} from "lucide-react";
-import {REPORT_REASONS} from "~/utils/reportReason";
-import {formatDate} from "~/utils/format";
 import {Link} from "react-router";
 import React from "react";
+import {REPORT_REASONS} from "../../utils/reportReason";
+import {formatDate} from "../../utils/format";
 
 export default function AdminReportsCard({barrier}: Readonly<{ barrier: any }>) {
     const canManage = barrier.state !== 'RESOLVED' && barrier.state !== 'HIDDEN';

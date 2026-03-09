@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
-import {getDynamicIcon} from '~/utils/icons';
 import {MapPin, TrendingUp} from 'lucide-react';
+import {getDynamicIcon} from "../app/utils/icons";
 
 describe('getDynamicIcon utility', () => {
     it('dovrebbe restituire MapPin se iconName è nullo', () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import {useState} from "react";
-import {supabase} from "~/services/supabase";
+import {supabase} from "../../services/supabase";
 
 export default function SocialLogin() {
     const [loading, setLoading] = useState(false);

@@ -1,7 +1,7 @@
 import {useEffect} from "react";
 import {useNavigate} from "react-router";
-import {supabase} from "~/services/supabase";
-import Loading from "~/components/Loading";
+import {supabase} from "../../services/supabase";
+import Loading from "../../components/Loading";
 
 export default function AuthCallback() {
     const navigate = useNavigate();
