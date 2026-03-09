@@ -4,12 +4,9 @@ import {envSchema} from '~/utils/envSchema';
 describe('envSchema utility', () => {
     const validEnv = {
         VITE_FIREBASE_API_KEY: 'fake-api-key',
-        VITE_FIREBASE_AUTH_DOMAIN: 'project.firebaseapp.com',
         VITE_FIREBASE_PROJECT_ID: 'project-id',
-        VITE_FIREBASE_STORAGE_BUCKET: 'project.appspot.com',
         VITE_FIREBASE_MESSAGING_SENDER_ID: '123456789',
         VITE_FIREBASE_APP_ID: '1:123456789:web:abcdef',
-        VITE_FIREBASE_MEASUREMENT_ID: 'G-ABCDEFG',
         VITE_FIREBASE_VAPID_KEY: 'fake-vapid-key',
         VITE_MAPBOX_TOKEN: 'fake-mapbox-token',
         VITE_ORS_API_KEY: 'fake-ors-key',
