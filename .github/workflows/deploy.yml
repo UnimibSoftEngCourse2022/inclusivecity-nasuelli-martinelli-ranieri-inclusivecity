@@ -1,7 +1,10 @@
 name: Deploy to Vercel
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI Pipeline - Check & Test"]
+    types:
+      - completed
     branches:
       - main
 
@@ -13,6 +16,8 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     steps:
       - uses: actions/checkout@v4
 
