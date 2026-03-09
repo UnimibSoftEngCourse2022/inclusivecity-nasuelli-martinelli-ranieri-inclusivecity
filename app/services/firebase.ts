@@ -1,5 +1,4 @@
 import {getApp, getApps, initializeApp} from "firebase/app";
-import {type Analytics, getAnalytics, isSupported as isAnalyticsSupported} from "firebase/analytics";
 import {getMessaging, getToken, isSupported as isMessagingSupported} from "firebase/messaging";
 import {envSchema} from "~/utils/envSchema";
 
@@ -7,27 +6,12 @@ const env = envSchema.parse(import.meta.env);
 
 const firebaseConfig = {
     apiKey: env.VITE_FIREBASE_API_KEY,
-    authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
     projectId: env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
     appId: env.VITE_FIREBASE_APP_ID,
-    measurementId: env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-
-const initializeAnalytics = async (): Promise<Analytics | null> => {
-    if (globalThis.window !== undefined) {
-        const supported = await isAnalyticsSupported();
-        if (supported) {
-            return getAnalytics(app);
-        }
-    }
-    return null;
-};
-
-export const analytics = await initializeAnalytics();
 
 export async function requestNotificationPermission(): Promise<string | null> {
     try {
@@ -40,7 +24,7 @@ export async function requestNotificationPermission(): Promise<string | null> {
                 return null;
             }
         } else if (Notification.permission === 'denied') {
-            console.log("Permessi bloccati nelle impostazioni.");
+            console.log("Permessi bloccati nelle impostazioni del browser.");
             return null;
         }
 
@@ -59,7 +43,7 @@ export async function requestNotificationPermission(): Promise<string | null> {
         if (currentToken) {
             return currentToken;
         } else {
-            console.warn("Nessun token disponibile.");
+            console.warn("Nessun token disponibile. Assicurati di aver concesso i permessi.");
             return null;
         }
     } catch (error) {
