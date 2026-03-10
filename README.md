@@ -1,87 +1,56 @@
-# Welcome to React Router!
+# 🏙️ InclusiveCity
 
-A modern, production-ready template for building full-stack React applications using React Router.
+**La città a misura di tutti.** 
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+InclusiveCity è una piattaforma collaborativa progettata per abbattere le barriere architettoniche 
+e promuovere una mobilità urbana realmente accessibile e inclusiva.
 
-## Features
-
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
-
-```bash
-npm install
-```
-
-### Development
-
-Start the development server with HMR:
-
-```bash
-npm run dev
-```
-
-Your application will be available at `http://localhost:5173`.
-
-## Building for Production
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+L'obiettivo dell'applicazione è fornire a tutti i cittadini, in particolare a chi ha specifiche 
+esigenze di mobilità, uno strumento affidabile per muoversi in città in totale sicurezza e autonomia.
 
 ---
 
-Built with ❤️ using React Router.
+## ✨ Cosa puoi fare con InclusiveCity?
+
+L'applicazione offre un insieme di strumenti pensati per la comunità e per la navigazione quotidiana:
+
+### 🗺️ Calcolo di Percorsi Accessibili
+
+Non tutti gli ostacoli sono uguali per tutti. Inserendo il tuo punto di partenza e la tua destinazione, 
+l'app calcola il percorso pedonale più sicuro, **evitando automaticamente le strade che presentano barriere
+incompatibili con il tuo profilo di mobilità** (es. sedia a rotelle, passeggino, disabilità visiva o motoria).
+
+### 📍 Segnalazione delle Barriere (Crowdsourcing)
+
+Ogni cittadino può contribuire attivamente a mappare la propria città. Hai trovato un ascensore guasto 
+in metropolitana, un marciapiede dissestato o uno scivolo bloccato? Puoi segnalarlo in pochi secondi 
+direttamente sulla mappa, aggiungendo una descrizione e una fotografia per avvisare gli altri utenti.
+
+### 🤝 Validazione e Risoluzione dalla Community
+
+L'affidabilità dei dati è garantita dalla comunità stessa. Gli utenti possono:
+
+* Lasciare **feedback** sulle barriere esistenti per confermarne la presenza o la gravità.
+* Inviare **prove di risoluzione** (es. una foto che dimostra che l'ascensore è stato riparato o l'ostacolo rimosso).
+* Segnalare eventuali abusi o finte barriere inserite per errore.
+
+### ⭐ Sistema di Reputazione (Reputation Score)
+
+Per premiare i cittadini più virtuosi e mantenere alta la qualità delle informazioni, l'app utilizza un sistema di 
+reputazione. Chi contribuisce positivamente (segnalando barriere reali o confermando risoluzioni) guadagna punti affidabilità. 
+Le segnalazioni degli utenti "Veterani" hanno un peso maggiore e permettono di aggiornare la mappa più velocemente.
+
+### 🔔 Notifiche in Tempo Reale
+
+Resta sempre aggiornato sui tuoi contributi. Il sistema ti invierà una notifica se una barriera che avevi segnalato 
+viene finalmente risolta, se qualcuno commenta un tuo report o se una tua prova di risoluzione viene approvata.
+
+---
+
+## 🎯 A chi si rivolge?
+
+InclusiveCity è pensata per:
+
+* **Persone con disabilità motorie, visive o cognitive**, che necessitano di percorsi sicuri e verificati.
+* **Genitori con passeggini**, alla ricerca di percorsi senza gradini o ostacoli.
+* **Cittadini attivi e volontari**, che vogliono contribuire a rendere il proprio quartiere migliore e più vivibile.
